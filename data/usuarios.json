@@ -1,0 +1,11 @@
+[
+  {
+    "usuario": "admin",
+    "password": "admin123",
+    "nombre": "Administrador",
+    "rol": "admin",
+    "activo": true,
+    "id": "1767145534989",
+    "createdAt": "2025-12-31T01:45:34.989Z"
+  }
+]

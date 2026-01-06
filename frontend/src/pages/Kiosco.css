@@ -1,0 +1,540 @@
+/* CONTENEDOR PRINCIPAL */
+.kiosco-container {
+  min-height: 100vh;
+  background: #FFFFFF;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  position: relative;
+}
+
+/* BOTÓN ADMIN */
+.btn-admin-acceso {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: white;
+  color: #666666;
+  padding: 10px 20px;
+  border-radius: 12px;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border: 2px solid #E0E0E0;
+  transition: all 0.3s ease;
+  z-index: 10;
+}
+
+.btn-admin-acceso:hover {
+  background: #4A90E2;
+  color: white;
+  border-color: #4A90E2;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+}
+
+/* CONTENIDO */
+.kiosco-content {
+  background: white;
+  border-radius: 24px;
+  padding: 60px 40px;
+  max-width: 900px;
+  width: 100%;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  text-align: center;
+  border: 1px solid #E0E0E0;
+}
+
+/* HEADER */
+.kiosco-header {
+  margin-bottom: 40px;
+}
+
+.kiosco-logo {
+  height: 120px;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.1));
+}
+
+/* OPCIONES INICIO */
+.kiosco-opciones h1 {
+  font-size: 42px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 12px;
+}
+
+.kiosco-opciones .subtitle {
+  font-size: 18px;
+  color: #666666;
+  margin-bottom: 50px;
+}
+
+.opciones-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: 24px;
+}
+
+.opcion-card {
+  background: white;
+  border: 3px solid #E0E0E0;
+  border-radius: 20px;
+  padding: 40px 24px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  text-align: center;
+}
+
+.opcion-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+}
+
+.opcion-azul {
+  border-color: #4A90E2;
+}
+
+.opcion-azul:hover {
+  background: #F5F9FF;
+  border-color: #357ABD;
+}
+
+.opcion-azul .opcion-circulo {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+}
+
+.opcion-verde {
+  border-color: #50C878;
+}
+
+.opcion-verde:hover {
+  background: #F0FFF4;
+  border-color: #3FA662;
+}
+
+.opcion-verde .opcion-circulo {
+  background: linear-gradient(135deg, #50C878, #3FA662);
+}
+
+.opcion-amarillo {
+  border-color: #FFC107;
+}
+
+.opcion-amarillo:hover {
+  background: #FFFBF0;
+  border-color: #FFA000;
+}
+
+.opcion-amarillo .opcion-circulo {
+  background: linear-gradient(135deg, #FFC107, #FFA000);
+}
+
+.opcion-circulo {
+  width: 96px;
+  height: 96px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 20px;
+  color: white;
+}
+
+.opcion-card h2 {
+  font-size: 22px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 8px;
+}
+
+.opcion-card p {
+  font-size: 15px;
+  color: #666666;
+  margin: 0;
+}
+
+/* FORMULARIOS */
+.kiosco-form {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.form-icono {
+  width: 100px;
+  height: 100px;
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 30px;
+  color: white;
+}
+
+.kiosco-form h1 {
+  font-size: 32px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 30px;
+}
+
+.kiosco-form .subtitle {
+  font-size: 16px;
+  color: #666666;
+  margin-bottom: 30px;
+}
+
+.input-kiosco {
+  width: 100%;
+  padding: 20px;
+  font-size: 20px;
+  border: 3px solid #E0E0E0;
+  border-radius: 16px;
+  margin-bottom: 24px;
+  text-align: center;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.input-kiosco:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 4px rgba(74, 144, 226, 0.1);
+}
+
+.input-kiosco::placeholder {
+  color: #CCCCCC;
+  font-weight: 500;
+}
+
+/* OPCIONES DE FOTO */
+.foto-opciones {
+  margin: 20px 0;
+}
+
+.btn-foto {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: white;
+  border: none;
+  padding: 16px 32px;
+  font-size: 16px;
+  font-weight: 700;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  margin-bottom: 12px;
+}
+
+.btn-foto:hover {
+  transform: scale(1.02);
+  box-shadow: 0 6px 16px rgba(74, 144, 226, 0.3);
+}
+
+.texto-opcional {
+  font-size: 14px;
+  color: #999999;
+  font-style: italic;
+  margin: 8px 0;
+}
+
+/* CÁMARA */
+.camara-container {
+  margin: 20px 0;
+  border: 3px solid #E0E0E0;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.webcam-kiosco {
+  width: 100%;
+  border-radius: 12px;
+}
+
+.botones-camara {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #F5F5F5;
+}
+
+/* PREVIEW FOTO */
+.foto-preview {
+  margin: 20px 0;
+  text-align: center;
+}
+
+.preview-img {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 4px solid #4A90E2;
+  margin-bottom: 12px;
+}
+
+.btn-cambiar-foto {
+  background: #F5F5F5;
+  color: #666666;
+  border: 2px solid #E0E0E0;
+  padding: 10px 20px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.btn-cambiar-foto:hover {
+  background: #E0E0E0;
+}
+
+/* RESULTADOS BÚSQUEDA */
+.resultados-lista {
+  margin: 20px 0;
+  max-height: 300px;
+  overflow-y: auto;
+  border: 2px solid #E0E0E0;
+  border-radius: 12px;
+  padding: 10px;
+}
+
+.resultados-lista h3 {
+  font-size: 16px;
+  color: #666666;
+  margin-bottom: 12px;
+  text-align: left;
+  padding-left: 10px;
+}
+
+.resultado-item {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 16px;
+  background: white;
+  border: 2px solid #E0E0E0;
+  border-radius: 12px;
+  margin-bottom: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  width: 100%;
+  text-align: left;
+}
+
+.resultado-item:hover {
+  border-color: #4A90E2;
+  background: #F5F9FF;
+  transform: translateX(4px);
+}
+
+.resultado-foto {
+  width: 50px;
+  height: 50px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #4A90E2;
+}
+
+.resultado-info {
+  flex: 1;
+}
+
+.resultado-info strong {
+  display: block;
+  font-size: 16px;
+  color: #000000;
+  margin-bottom: 4px;
+}
+
+.resultado-info span {
+  font-size: 14px;
+  color: #666666;
+}
+
+/* BOTONES KIOSCO */
+.botones-kiosco {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.btn-kiosco {
+  padding: 18px 32px;
+  font-size: 18px;
+  font-weight: 700;
+  border: none;
+  border-radius: 16px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.btn-kiosco.btn-primary {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  color: white;
+}
+
+.btn-kiosco.btn-primary:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(74, 144, 226, 0.4);
+}
+
+.btn-kiosco.btn-volver {
+  background: #F5F5F5;
+  color: #666666;
+}
+
+.btn-kiosco.btn-volver:hover {
+  background: #E0E0E0;
+}
+
+.btn-kiosco.btn-confirmar {
+  background: linear-gradient(135deg, #50C878, #3FA662);
+  color: white;
+  font-size: 20px;
+  padding: 24px;
+}
+
+.btn-kiosco.btn-confirmar:hover {
+  transform: scale(1.02);
+  box-shadow: 0 8px 16px rgba(80, 200, 120, 0.4);
+}
+
+/* CONFIRMACIÓN */
+.kiosco-confirmacion {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.foto-grande-container {
+  margin-bottom: 30px;
+}
+
+.foto-grande {
+  width: 180px;
+  height: 180px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 6px solid #4A90E2;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.kiosco-confirmacion h1 {
+  font-size: 28px;
+  color: #666666;
+  font-weight: 600;
+  margin-bottom: 12px;
+}
+
+.nombre-confirmacion {
+  font-size: 36px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 8px;
+}
+
+.numero-confirmacion {
+  font-size: 20px;
+  color: #4A90E2;
+  font-weight: 700;
+  margin-bottom: 40px;
+}
+
+/* ÉXITO */
+.kiosco-exito {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.icono-exito {
+  width: 140px;
+  height: 140px;
+  background: linear-gradient(135deg, #50C878, #3FA662);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 30px;
+  color: white;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+
+.kiosco-exito h1 {
+  font-size: 48px;
+  font-weight: 800;
+  color: #000000;
+  margin-bottom: 16px;
+}
+
+.mensaje-exito {
+  font-size: 24px;
+  color: #666666;
+  font-weight: 600;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .kiosco-content {
+    padding: 40px 24px;
+  }
+
+  .kiosco-logo {
+    height: 80px;
+  }
+
+  .kiosco-opciones h1 {
+    font-size: 32px;
+  }
+
+  .opciones-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .opcion-card {
+    padding: 32px 20px;
+  }
+
+  .opcion-circulo {
+    width: 80px;
+    height: 80px;
+  }
+
+  .kiosco-form h1 {
+    font-size: 26px;
+  }
+
+  .input-kiosco {
+    font-size: 18px;
+    padding: 16px;
+  }
+
+  .foto-grande {
+    width: 140px;
+    height: 140px;
+  }
+
+  .nombre-confirmacion {
+    font-size: 28px;
+  }
+
+  .preview-img {
+    width: 120px;
+    height: 120px;
+  }
+}
