@@ -122,4 +122,44 @@ router.patch('/:id/toggle-activo', async (req, res) => {
   }
 });
 
+// Eliminar usuario permanentemente
+router.delete('/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Verificar que no sea el último usuario admin activo
+    const { rows: adminsActivos } = await pool.query(
+      `SELECT COUNT(*) as total 
+       FROM usuarios 
+       WHERE rol = 'admin' AND activo = true AND id != $1`,
+      [id]
+    );
+
+    if (parseInt(adminsActivos[0].total) === 0) {
+      return res.status(400).json({ 
+        error: 'No puedes eliminar el último administrador activo del sistema' 
+      });
+    }
+
+    const { rows } = await pool.query(
+      `DELETE FROM usuarios 
+       WHERE id = $1
+       RETURNING id, usuario, nombre, rol`,
+      [id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      mensaje: 'Usuario eliminado permanentemente',
+      usuario: rows[0]
+    });
+  } catch (err) {
+    console.error('Error eliminando usuario:', err);
+    res.status(500).json({ error: 'Error al eliminar usuario', detalle: serializeDbError(err) });
+  }
+});
+
 module.exports = router;

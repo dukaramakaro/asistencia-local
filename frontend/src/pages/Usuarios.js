@@ -104,6 +104,26 @@ function Usuarios() {
     }
   };
 
+  const eliminarUsuario = async (usr) => {
+    const confirmar = window.confirm(
+      `⚠️ ELIMINAR USUARIO PERMANENTEMENTE ⚠️\n\n` +
+      `¿Estás seguro de eliminar a ${usr.nombre} (${usr.usuario})?\n\n` +
+      `Esta acción NO se puede deshacer.\n` +
+      `El usuario será eliminado completamente del sistema.`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      await axios.delete(`${API_URL}/usuarios/${usr.id}`);
+      alert('✅ Usuario eliminado correctamente');
+      cargarUsuarios();
+    } catch (error) {
+      console.error('Error al eliminar usuario:', error);
+      alert(error.response?.data?.error || 'Error al eliminar usuario');
+    }
+  };
+
   if (loading) {
     return (
       <div className="admin-container">
@@ -276,6 +296,15 @@ function Usuarios() {
                           title={usr.activo ? 'Desactivar usuario' : 'Activar usuario'}
                         >
                           {usr.activo ? '🚫 Desactivar' : '✓ Activar'}
+                        </button>
+
+                        <button 
+                          className="btn btn-sm btn-danger"
+                          onClick={() => eliminarUsuario(usr)}
+                          title="Eliminar usuario permanentemente"
+                          style={{backgroundColor: '#D32F2F'}}
+                        >
+                          🗑️ Eliminar
                         </button>
                       </>
                     )}
