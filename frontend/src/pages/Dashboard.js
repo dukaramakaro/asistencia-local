@@ -95,6 +95,7 @@ function Dashboard() {
         <div className="nav-links">
           <Link to="/admin/dashboard" className="nav-link active">Dashboard</Link>
           <Link to="/admin/miembros" className="nav-link">Miembros</Link>
+          <Link to="/admin/usuarios" className="nav-link">Usuarios</Link>
           <button onClick={handleLogout} className="btn-logout">Salir</button>
         </div>
       </nav>

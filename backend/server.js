@@ -8,6 +8,7 @@ const miembrosRoutes = require('./routes/miembros');
 const asistenciasRoutes = require('./routes/asistencias');
 const authRoutes = require('./routes/auth');
 const exportarRoutes = require('./routes/exportar');
+const usuariosRoutes = require('./routes/usuarios');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use('/api/miembros', miembrosRoutes);
 app.use('/api/asistencias', asistenciasRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/exportar', exportarRoutes);
+app.use('/api/usuarios', usuariosRoutes);
 
 app.get('/api/health', (req, res) => {
   res.json({

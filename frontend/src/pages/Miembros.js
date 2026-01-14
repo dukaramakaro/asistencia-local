@@ -4,6 +4,7 @@ import Webcam from 'react-webcam';
 import axios from 'axios';
 import './Admin.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
+import EditarMiembro from '../components/EditarMiembro';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -13,6 +14,7 @@ function Miembros() {
   const [mostrarForm, setMostrarForm] = useState(false);
   const [usuario, setUsuario] = useState(null);
   const [mostrarInactivos, setMostrarInactivos] = useState(true);
+  const [miembroEditando, setMiembroEditando] = useState(null);
   
   // Form states
   const [nombre, setNombre] = useState('');
@@ -186,6 +188,7 @@ function Miembros() {
         <div className="nav-links">
           <Link to="/admin/dashboard" className="nav-link">Dashboard</Link>
           <Link to="/admin/miembros" className="nav-link active">Miembros</Link>
+          <Link to="/admin/usuarios" className="nav-link">Usuarios</Link>
           <button onClick={handleLogout} className="btn-logout">Salir</button>
         </div>
       </nav>
@@ -437,6 +440,17 @@ function Miembros() {
 
                   <div className="miembro-acciones">
                     <button 
+                      className="btn-icon btn-icon-primary"
+                      onClick={() => setMiembroEditando(miembro)}
+                      title="Editar miembro"
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                        <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+
+                    <button 
                       className="btn-icon btn-icon-success"
                       onClick={() => toggleActivo(miembro)}
                       title={miembro.activo !== false ? 'Desactivar' : 'Activar'}
@@ -487,6 +501,14 @@ function Miembros() {
           )}
         </div>
       </div>
+
+      {miembroEditando && (
+        <EditarMiembro
+          miembro={miembroEditando}
+          onClose={() => setMiembroEditando(null)}
+          onActualizar={cargarMiembros}
+        />
+      )}
     </div>
   );
 }
