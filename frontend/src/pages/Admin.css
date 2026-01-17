@@ -1077,3 +1077,45 @@
   opacity: 0.5;
   cursor: not-allowed;
 }
+
+/* FILTROS DE LISTA */
+.filtros-lista {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.ordenar-por {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.ordenar-por span {
+  font-size: 14px;
+  color: #666666;
+}
+
+.btn-ordenar {
+  padding: 6px 14px;
+  border: 2px solid #E0E0E0;
+  background: white;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  color: #666666;
+}
+
+.btn-ordenar:hover {
+  border-color: #4A90E2;
+  color: #4A90E2;
+}
+
+.btn-ordenar.activo {
+  background: #4A90E2;
+  border-color: #4A90E2;
+  color: white;
+}

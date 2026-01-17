@@ -18,6 +18,7 @@ function Dashboard() {
   const [yaRegistradoHoy, setYaRegistradoHoy] = useState(false);
   const [forzarRegistro, setForzarRegistro] = useState(false);
   const [registrando, setRegistrando] = useState(false);
+  const [ordenarAsistencias, setOrdenarAsistencias] = useState('hora'); // 'hora', 'nombre', 'numero'
   const navigate = useNavigate();
 
   const ymdCancun = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Cancun', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -279,7 +280,31 @@ function Dashboard() {
         </div>
 
         <div className="section">
-          <h2>Asistencias de Hoy</h2>
+          <div className="section-header">
+            <h2>Asistencias de Hoy</h2>
+            
+            <div className="ordenar-por">
+              <span>Ordenar por:</span>
+              <button 
+                className={`btn-ordenar ${ordenarAsistencias === 'hora' ? 'activo' : ''}`}
+                onClick={() => setOrdenarAsistencias('hora')}
+              >
+                Hora
+              </button>
+              <button 
+                className={`btn-ordenar ${ordenarAsistencias === 'nombre' ? 'activo' : ''}`}
+                onClick={() => setOrdenarAsistencias('nombre')}
+              >
+                Nombre
+              </button>
+              <button 
+                className={`btn-ordenar ${ordenarAsistencias === 'numero' ? 'activo' : ''}`}
+                onClick={() => setOrdenarAsistencias('numero')}
+              >
+                Número
+              </button>
+            </div>
+          </div>
           
           {asistenciasHoy.length === 0 ? (
             <p className="no-data">No hay asistencias registradas aún</p>
@@ -297,7 +322,21 @@ function Dashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {asistenciasHoy.map((asistencia, index) => (
+                  {[...asistenciasHoy]
+                    .sort((a, b) => {
+                      if (ordenarAsistencias === 'hora') {
+                        return new Date(b.hora) - new Date(a.hora);
+                      } else if (ordenarAsistencias === 'nombre') {
+                        const nombreA = a.miembro?.nombre || a.nombre || '';
+                        const nombreB = b.miembro?.nombre || b.nombre || '';
+                        return nombreA.localeCompare(nombreB);
+                      } else {
+                        const numA = parseInt(a.miembro?.numero || 0);
+                        const numB = parseInt(b.miembro?.numero || 0);
+                        return numA - numB;
+                      }
+                    })
+                    .map((asistencia, index) => (
                     <tr key={index}>
                       <td>
                         {asistencia.miembro?.fotoUrl && (

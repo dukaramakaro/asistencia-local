@@ -15,6 +15,7 @@ function Miembros() {
   const [usuario, setUsuario] = useState(null);
   const [mostrarInactivos, setMostrarInactivos] = useState(true);
   const [miembroEditando, setMiembroEditando] = useState(null);
+  const [ordenarPor, setOrdenarPor] = useState('nombre'); // 'nombre' o 'numero'
   
   // Form states
   const [nombre, setNombre] = useState('');
@@ -168,10 +169,18 @@ function Miembros() {
     );
   }
 
-  const miembrosFiltrados = miembros.filter(m => {
-    if (mostrarInactivos) return true;
-    return m.activo !== false;
-  });
+  const miembrosFiltrados = miembros
+    .filter(m => {
+      if (mostrarInactivos) return true;
+      return m.activo !== false;
+    })
+    .sort((a, b) => {
+      if (ordenarPor === 'nombre') {
+        return (a.nombre || '').localeCompare(b.nombre || '');
+      } else {
+        return parseInt(a.numero || 0) - parseInt(b.numero || 0);
+      }
+    });
 
   return (
     <div className="admin-container">
@@ -371,14 +380,32 @@ function Miembros() {
           <div className="section-header">
             <h2>Lista de Miembros ({miembrosFiltrados.length})</h2>
             
-            <label className="toggle-inactivos">
-              <input 
-                type="checkbox" 
-                checked={mostrarInactivos}
-                onChange={(e) => setMostrarInactivos(e.target.checked)}
-              />
-              <span>Mostrar inactivos</span>
-            </label>
+            <div className="filtros-lista">
+              <div className="ordenar-por">
+                <span>Ordenar por:</span>
+                <button 
+                  className={`btn-ordenar ${ordenarPor === 'nombre' ? 'activo' : ''}`}
+                  onClick={() => setOrdenarPor('nombre')}
+                >
+                  Nombre
+                </button>
+                <button 
+                  className={`btn-ordenar ${ordenarPor === 'numero' ? 'activo' : ''}`}
+                  onClick={() => setOrdenarPor('numero')}
+                >
+                  Número
+                </button>
+              </div>
+
+              <label className="toggle-inactivos">
+                <input 
+                  type="checkbox" 
+                  checked={mostrarInactivos}
+                  onChange={(e) => setMostrarInactivos(e.target.checked)}
+                />
+                <span>Mostrar inactivos</span>
+              </label>
+            </div>
           </div>
           
           {miembrosFiltrados.length === 0 ? (

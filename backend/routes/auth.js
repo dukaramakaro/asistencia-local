@@ -84,11 +84,16 @@ router.get('/setup-admin', async (req, res) => {
   }
 });
 
-// TEMPORAL: Resetear contraseña del admin a 'admin123'
-// Visitar: /api/auth/reset-admin
-// ⚠️ BORRAR ESTE ENDPOINT DESPUÉS DE USAR
+// EMERGENCIA: Resetear contraseña del admin
+// Visitar: /api/auth/reset-admin?clave=LMTLSS2025secreto
 router.get('/reset-admin', async (req, res) => {
   try {
+    // Verificar clave secreta
+    const { clave } = req.query;
+    if (clave !== 'LMTLSS2025secreto') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
     await ensureUsuariosTable();
 
     const result = await pool.query(
@@ -100,7 +105,7 @@ router.get('/reset-admin', async (req, res) => {
         mensaje: '✅ Contraseña de admin reseteada y activado', 
         usuario: 'admin', 
         password: 'admin123',
-        aviso: '⚠️ CAMBIA LA CONTRASEÑA Y BORRA ESTE ENDPOINT'
+        aviso: '⚠️ CAMBIA LA CONTRASEÑA DESPUÉS DE ENTRAR'
       });
     } else {
       // Si no existe admin, crearlo
@@ -113,7 +118,7 @@ router.get('/reset-admin', async (req, res) => {
         mensaje: '✅ Usuario admin creado', 
         usuario: 'admin', 
         password: 'admin123',
-        aviso: '⚠️ CAMBIA LA CONTRASEÑA Y BORRA ESTE ENDPOINT'
+        aviso: '⚠️ CAMBIA LA CONTRASEÑA DESPUÉS DE ENTRAR'
       });
     }
   } catch (err) {
@@ -122,11 +127,15 @@ router.get('/reset-admin', async (req, res) => {
   }
 });
 
-// TEMPORAL: Crear usuario de prueba
-// Visitar: /api/auth/crear-test
-// ⚠️ BORRAR ESTE ENDPOINT Y EL USUARIO DESPUÉS DE USAR
+// EMERGENCIA: Crear usuario de prueba
+// Visitar: /api/auth/crear-test?clave=LMTLSS2025secreto
 router.get('/crear-test', async (req, res) => {
   try {
+    const { clave } = req.query;
+    if (clave !== 'LMTLSS2025secreto') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
     await ensureUsuariosTable();
 
     // Borrar si ya existe
@@ -142,7 +151,7 @@ router.get('/crear-test', async (req, res) => {
       mensaje: '✅ Usuario de prueba creado', 
       usuario: 'test_temporal', 
       password: 'test123',
-      aviso: '⚠️ BORRA ESTE USUARIO Y ENDPOINT CUANDO TERMINES'
+      aviso: '⚠️ BORRA ESTE USUARIO CUANDO TERMINES'
     });
   } catch (err) {
     console.error('CREAR-TEST ERROR:', err);
@@ -150,10 +159,15 @@ router.get('/crear-test', async (req, res) => {
   }
 });
 
-// TEMPORAL: Borrar usuario de prueba
-// Visitar: /api/auth/borrar-test
+// EMERGENCIA: Borrar usuario de prueba
+// Visitar: /api/auth/borrar-test?clave=LMTLSS2025secreto
 router.get('/borrar-test', async (req, res) => {
   try {
+    const { clave } = req.query;
+    if (clave !== 'LMTLSS2025secreto') {
+      return res.status(403).json({ error: 'Acceso denegado' });
+    }
+
     await pool.query(`DELETE FROM usuarios WHERE usuario = 'test_temporal'`);
     return res.json({ mensaje: '✅ Usuario test_temporal eliminado' });
   } catch (err) {
