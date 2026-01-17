@@ -89,7 +89,7 @@ const calcularEdad = (fechaNacimiento) => {
 // Miembros
 const miembrosDB = {
   todas: async () => {
-    const { rows } = await pool.query('SELECT * FROM miembros ORDER BY CAST(numero AS INT) ASC');
+    const { rows } = await pool.query('SELECT * FROM miembros ORDER BY nombre ASC');
     return rows.map((m) => ({
       id: String(m.id),
       numero: m.numero,
@@ -254,6 +254,14 @@ const asistenciasDB = {
     return asistencias;
   },
 
+  verificarAsistenciaHoy: async (miembroId) => {
+    const { rows } = await pool.query(
+      `SELECT id FROM asistencias WHERE miembro_id = $1 AND fecha = $2 LIMIT 1`,
+      [miembroId, fechaCancun()]
+    );
+    return rows.length > 0;
+  },
+
   crear: async (asistencia) => {
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
@@ -282,6 +290,40 @@ const asistenciasDB = {
       tipo: a.tipo,
       miembro
     };
+  },
+
+  actualizar: async (id, datos) => {
+    const { rows } = await pool.query(
+      `UPDATE asistencias SET 
+        miembro_id = COALESCE($2, miembro_id),
+        nombre = COALESCE($3, nombre),
+        tipo = COALESCE($4, tipo)
+       WHERE id = $1
+       RETURNING *`,
+      [id, datos.miembroId || null, datos.nombre || null, datos.tipo || null]
+    );
+
+    if (rows.length === 0) return null;
+
+    const a = rows[0];
+    let miembro = null;
+    if (a.miembro_id) miembro = await miembrosDB.buscarPorId(a.miembro_id);
+
+    return {
+      id: String(a.id),
+      miembroId: a.miembro_id ? String(a.miembro_id) : null,
+      nombre: a.nombre,
+      fotoBase64: a.foto_base64,
+      fecha: a.fecha,
+      hora: a.hora,
+      tipo: a.tipo,
+      miembro
+    };
+  },
+
+  eliminar: async (id) => {
+    const { rowCount } = await pool.query('DELETE FROM asistencias WHERE id = $1', [id]);
+    return rowCount > 0;
   }
 };
 

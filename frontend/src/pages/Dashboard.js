@@ -11,6 +11,13 @@ function Dashboard() {
   const [asistenciasHoy, setAsistenciasHoy] = useState([]);
   const [loading, setLoading] = useState(true);
   const [usuario, setUsuario] = useState(null);
+  const [editandoAsistencia, setEditandoAsistencia] = useState(null);
+  const [miembrosDisponibles, setMiembrosDisponibles] = useState([]);
+  const [mostrarRegistroManual, setMostrarRegistroManual] = useState(false);
+  const [miembroSeleccionado, setMiembroSeleccionado] = useState('');
+  const [yaRegistradoHoy, setYaRegistradoHoy] = useState(false);
+  const [forzarRegistro, setForzarRegistro] = useState(false);
+  const [registrando, setRegistrando] = useState(false);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -39,6 +46,7 @@ function Dashboard() {
       const miembros = resMiembros.data;
 
       setAsistenciasHoy(asistencias);
+      setMiembrosDisponibles(miembros.filter(m => m.activo !== false));
 
       const statsCalculadas = {
         asistenciaHoy: asistencias.length,
@@ -70,6 +78,114 @@ function Dashboard() {
 
   const exportarMiembros = () => {
     window.open(`${API_URL}/exportar/miembros`, '_blank');
+  };
+
+  const eliminarAsistencia = async (asistencia) => {
+    const confirmar = window.confirm(
+      `¿Estás seguro de eliminar la asistencia de ${asistencia.miembro?.nombre || asistencia.nombre}?\n\nEsta acción no se puede deshacer.`
+    );
+
+    if (!confirmar) return;
+
+    try {
+      await axios.delete(`${API_URL}/asistencias/${asistencia.id}`);
+      cargarDatos();
+    } catch (error) {
+      console.error('Error al eliminar asistencia:', error);
+      alert('Error al eliminar la asistencia');
+    }
+  };
+
+  const guardarEdicionAsistencia = async () => {
+    if (!editandoAsistencia) return;
+
+    try {
+      await axios.put(`${API_URL}/asistencias/${editandoAsistencia.id}`, {
+        miembroId: editandoAsistencia.miembroId,
+        nombre: editandoAsistencia.nombre,
+        tipo: editandoAsistencia.tipo
+      });
+      setEditandoAsistencia(null);
+      cargarDatos();
+    } catch (error) {
+      console.error('Error al actualizar asistencia:', error);
+      alert('Error al actualizar la asistencia');
+    }
+  };
+
+  const handleMiembroChange = (miembroId) => {
+    const miembro = miembrosDisponibles.find(m => m.id === miembroId);
+    if (miembro) {
+      setEditandoAsistencia({
+        ...editandoAsistencia,
+        miembroId: miembro.id,
+        nombre: miembro.nombre,
+        tipo: miembro.tipo
+      });
+    }
+  };
+
+  // Funciones para registro manual
+  const abrirRegistroManual = () => {
+    setMostrarRegistroManual(true);
+    setMiembroSeleccionado('');
+    setYaRegistradoHoy(false);
+    setForzarRegistro(false);
+  };
+
+  const cerrarRegistroManual = () => {
+    setMostrarRegistroManual(false);
+    setMiembroSeleccionado('');
+    setYaRegistradoHoy(false);
+    setForzarRegistro(false);
+  };
+
+  const verificarMiembroSeleccionado = async (miembroId) => {
+    setMiembroSeleccionado(miembroId);
+    setForzarRegistro(false);
+    
+    if (!miembroId) {
+      setYaRegistradoHoy(false);
+      return;
+    }
+
+    try {
+      const res = await axios.get(`${API_URL}/asistencias/verificar/${miembroId}`);
+      setYaRegistradoHoy(res.data.yaRegistrado);
+    } catch (error) {
+      console.error('Error al verificar:', error);
+      setYaRegistradoHoy(false);
+    }
+  };
+
+  const registrarAsistenciaManual = async () => {
+    if (!miembroSeleccionado) {
+      alert('Selecciona un miembro');
+      return;
+    }
+
+    if (yaRegistradoHoy && !forzarRegistro) {
+      alert('Este miembro ya tiene asistencia hoy. Marca la casilla para forzar el registro.');
+      return;
+    }
+
+    setRegistrando(true);
+
+    try {
+      await axios.post(`${API_URL}/asistencias/checkin`, {
+        miembroId: miembroSeleccionado,
+        forzar: forzarRegistro
+      });
+
+      cerrarRegistroManual();
+      cargarDatos();
+      alert('✅ Asistencia registrada correctamente');
+    } catch (error) {
+      console.error('Error al registrar:', error);
+      alert('Error al registrar la asistencia');
+    } finally {
+      setRegistrando(false);
+    }
   };
 
   if (loading) {
@@ -177,6 +293,7 @@ function Dashboard() {
                     <th>Nombre</th>
                     <th>Hora</th>
                     <th>Tipo</th>
+                    <th>Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -192,12 +309,36 @@ function Dashboard() {
                         )}
                       </td>
                       <td>{asistencia.miembro?.numero || 'N/A'}</td>
-                      <td>{asistencia.miembro?.nombre || 'Desconocido'}</td>
+                      <td>{asistencia.miembro?.nombre || asistencia.nombre || 'Desconocido'}</td>
                       <td>{new Date(asistencia.hora).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}</td>
                       <td>
-                        <span className={`badge ${asistencia.miembro?.tipo}`}>
-                          {asistencia.miembro?.tipo || 'N/A'}
+                        <span className={`badge ${asistencia.miembro?.tipo || asistencia.tipo}`}>
+                          {asistencia.miembro?.tipo || asistencia.tipo || 'N/A'}
                         </span>
+                      </td>
+                      <td>
+                        <div className="acciones-tabla">
+                          <button 
+                            className="btn-icon btn-icon-primary"
+                            onClick={() => setEditandoAsistencia(asistencia)}
+                            title="Editar asistencia"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                            </svg>
+                          </button>
+                          <button 
+                            className="btn-icon btn-icon-danger"
+                            onClick={() => eliminarAsistencia(asistencia)}
+                            title="Eliminar asistencia"
+                          >
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6"/>
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/>
+                            </svg>
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   ))}
@@ -210,6 +351,14 @@ function Dashboard() {
         <div className="section">
           <h2>Acciones Rápidas</h2>
           <div className="acciones-grid">
+            <button 
+              className="accion-card accion-destacada"
+              onClick={abrirRegistroManual}
+            >
+              <div className="accion-icon">📝</div>
+              <div className="accion-label">Registrar Asistencia Manual</div>
+            </button>
+
             <button 
               className="accion-card"
               onClick={() => navigate('/admin/miembros')}
@@ -244,6 +393,133 @@ function Dashboard() {
           </div>
         </div>
       </div>
+
+      {/* Modal de edición de asistencia */}
+      {editandoAsistencia && (
+        <div className="modal-overlay" onClick={() => setEditandoAsistencia(null)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>Editar Asistencia</h2>
+              <button className="btn-close" onClick={() => setEditandoAsistencia(null)}>×</button>
+            </div>
+            
+            <div className="form-group">
+              <label>Cambiar Miembro</label>
+              <select 
+                value={editandoAsistencia.miembroId || ''}
+                onChange={(e) => handleMiembroChange(e.target.value)}
+                className="form-select"
+              >
+                <option value="">-- Seleccionar miembro --</option>
+                {miembrosDisponibles.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre} ({m.numeroFormateado}) - {m.tipo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="form-group">
+              <label>Nombre actual</label>
+              <input 
+                type="text" 
+                value={editandoAsistencia.nombre || editandoAsistencia.miembro?.nombre || ''} 
+                readOnly
+                className="form-input-readonly"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Tipo</label>
+              <select 
+                value={editandoAsistencia.tipo || editandoAsistencia.miembro?.tipo || 'miembro'}
+                onChange={(e) => setEditandoAsistencia({...editandoAsistencia, tipo: e.target.value})}
+              >
+                <option value="miembro">Miembro</option>
+                <option value="visitante">Visitante</option>
+              </select>
+            </div>
+
+            <div className="form-actions">
+              <button className="btn btn-primary" onClick={guardarEdicionAsistencia}>
+                ✓ Guardar Cambios
+              </button>
+              <button className="btn btn-secondary" onClick={() => setEditandoAsistencia(null)}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de registro manual */}
+      {mostrarRegistroManual && (
+        <div className="modal-overlay" onClick={cerrarRegistroManual}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📝 Registrar Asistencia Manual</h2>
+              <button className="btn-close" onClick={cerrarRegistroManual}>×</button>
+            </div>
+            
+            <p className="modal-descripcion">
+              Usa esta opción para registrar la asistencia de un miembro manualmente. 
+              Útil cuando alguien no pudo usar el kiosco.
+            </p>
+
+            <div className="form-group">
+              <label>Seleccionar Miembro *</label>
+              <select 
+                value={miembroSeleccionado}
+                onChange={(e) => verificarMiembroSeleccionado(e.target.value)}
+                className="form-select"
+              >
+                <option value="">-- Selecciona un miembro --</option>
+                {miembrosDisponibles.map(m => (
+                  <option key={m.id} value={m.id}>
+                    {m.nombre} ({m.numeroFormateado}) - {m.tipo}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            {yaRegistradoHoy && (
+              <div className="aviso-duplicado">
+                <div className="aviso-icono">⚠️</div>
+                <div className="aviso-texto">
+                  <strong>Este miembro ya tiene asistencia registrada hoy.</strong>
+                  <p>Si deseas registrar otra asistencia de todos modos, marca la casilla de abajo.</p>
+                </div>
+              </div>
+            )}
+
+            {yaRegistradoHoy && (
+              <div className="form-group">
+                <label className="checkbox-label">
+                  <input 
+                    type="checkbox"
+                    checked={forzarRegistro}
+                    onChange={(e) => setForzarRegistro(e.target.checked)}
+                  />
+                  <span>Forzar registro (registrar aunque ya tenga asistencia hoy)</span>
+                </label>
+              </div>
+            )}
+
+            <div className="form-actions">
+              <button 
+                className="btn btn-primary" 
+                onClick={registrarAsistenciaManual}
+                disabled={registrando || !miembroSeleccionado || (yaRegistradoHoy && !forzarRegistro)}
+              >
+                {registrando ? '⏳ Registrando...' : '✓ Registrar Asistencia'}
+              </button>
+              <button className="btn btn-secondary" onClick={cerrarRegistroManual}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -951,3 +951,129 @@
 .btn-danger:hover {
   background: #D32F2F;
 }
+
+/* ACCIONES EN TABLA */
+.acciones-tabla {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+}
+
+.acciones-tabla .btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+}
+
+/* FORMULARIOS ADICIONALES */
+.form-select,
+.form-input-readonly {
+  width: 100%;
+  padding: 12px;
+  border: 2px solid #E0E0E0;
+  border-radius: 8px;
+  font-size: 14px;
+  transition: all 0.2s;
+}
+
+.form-select:focus {
+  outline: none;
+  border-color: #4A90E2;
+  box-shadow: 0 0 0 3px rgba(74, 144, 226, 0.1);
+}
+
+.form-input-readonly {
+  background: #F5F5F5;
+  color: #666666;
+  cursor: not-allowed;
+}
+
+/* ACCIÓN DESTACADA */
+.accion-card.accion-destacada {
+  background: linear-gradient(135deg, #4A90E2, #357ABD);
+  border: none;
+  color: white;
+}
+
+.accion-card.accion-destacada:hover {
+  background: linear-gradient(135deg, #357ABD, #2968a3);
+  transform: translateY(-4px);
+  box-shadow: 0 8px 20px rgba(74, 144, 226, 0.4);
+}
+
+.accion-card.accion-destacada .accion-icon {
+  font-size: 48px;
+}
+
+.accion-card.accion-destacada .accion-label {
+  color: white;
+  font-weight: 700;
+}
+
+/* MODAL DESCRIPCIÓN */
+.modal-descripcion {
+  color: #666666;
+  font-size: 14px;
+  margin-bottom: 20px;
+  padding: 12px;
+  background: #F5F7FA;
+  border-radius: 8px;
+  line-height: 1.5;
+}
+
+/* AVISO DUPLICADO */
+.aviso-duplicado {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: #FFF9E6;
+  border: 2px solid #FFE082;
+  border-radius: 12px;
+  margin-bottom: 20px;
+}
+
+.aviso-icono {
+  font-size: 24px;
+  flex-shrink: 0;
+}
+
+.aviso-texto strong {
+  display: block;
+  color: #F57C00;
+  margin-bottom: 4px;
+}
+
+.aviso-texto p {
+  color: #666666;
+  font-size: 13px;
+  margin: 0;
+}
+
+/* CHECKBOX LABEL */
+.checkbox-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  cursor: pointer;
+  font-weight: normal !important;
+}
+
+.checkbox-label input[type="checkbox"] {
+  width: 20px;
+  height: 20px;
+  margin-top: 2px;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.checkbox-label span {
+  color: #333333;
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+/* BOTÓN DESHABILITADO */
+.btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}

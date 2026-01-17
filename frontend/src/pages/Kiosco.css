@@ -538,3 +538,41 @@
     height: 120px;
   }
 }
+
+/* AVISO YA REGISTRADO */
+.aviso-ya-registrado {
+  text-align: center;
+  padding: 20px;
+}
+
+.aviso-ya-registrado svg {
+  width: 80px;
+  height: 80px;
+  color: #FFC107;
+  margin-bottom: 20px;
+}
+
+.aviso-ya-registrado h1 {
+  font-size: 28px;
+  font-weight: 800;
+  color: #FFC107;
+  margin-bottom: 12px;
+}
+
+.aviso-ya-registrado .nombre-confirmacion {
+  font-size: 32px;
+  font-weight: 700;
+  color: #000000;
+  margin-bottom: 16px;
+}
+
+.mensaje-ya-registrado {
+  font-size: 16px;
+  color: #666666;
+  line-height: 1.6;
+  margin-bottom: 30px;
+  padding: 16px;
+  background: #FFF9E6;
+  border-radius: 12px;
+  border: 2px solid #FFE082;
+}

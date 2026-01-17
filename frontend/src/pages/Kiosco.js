@@ -16,6 +16,7 @@ function Kiosco() {
   const [miembroSeleccionado, setMiembroSeleccionado] = useState(null);
   const [resultadosBusqueda, setResultadosBusqueda] = useState([]);
   const [mensaje, setMensaje] = useState('');
+  const [yaRegistrado, setYaRegistrado] = useState(false);
   
   const webcamRef = useRef(null);
 
@@ -29,6 +30,7 @@ function Kiosco() {
     setMiembroSeleccionado(null);
     setResultadosBusqueda([]);
     setMensaje('');
+    setYaRegistrado(false);
   };
 
   const buscarPorNumero = async (e) => {
@@ -51,7 +53,10 @@ function Kiosco() {
       );
 
       if (miembro) {
+        // Verificar si ya registró asistencia hoy
+        const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${miembro.id}`);
         setMiembroSeleccionado(miembro);
+        setYaRegistrado(verificacion.data.yaRegistrado);
         setModo('confirmacion');
       } else {
         alert('Número de miembro no encontrado');
@@ -85,7 +90,10 @@ function Kiosco() {
       }
 
       if (resultados.length === 1) {
+        // Verificar si ya registró asistencia hoy
+        const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${resultados[0].id}`);
         setMiembroSeleccionado(resultados[0]);
+        setYaRegistrado(verificacion.data.yaRegistrado);
         setModo('confirmacion');
       } else {
         setResultadosBusqueda(resultados);
@@ -96,10 +104,20 @@ function Kiosco() {
     }
   };
 
-  const seleccionarMiembro = (miembro) => {
-    setMiembroSeleccionado(miembro);
-    setResultadosBusqueda([]);
-    setModo('confirmacion');
+  const seleccionarMiembro = async (miembro) => {
+    try {
+      // Verificar si ya registró asistencia hoy
+      const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${miembro.id}`);
+      setMiembroSeleccionado(miembro);
+      setYaRegistrado(verificacion.data.yaRegistrado);
+      setResultadosBusqueda([]);
+      setModo('confirmacion');
+    } catch (error) {
+      console.error('Error al verificar asistencia:', error);
+      setMiembroSeleccionado(miembro);
+      setResultadosBusqueda([]);
+      setModo('confirmacion');
+    }
   };
 
   const capturarFoto = () => {
@@ -149,6 +167,11 @@ function Kiosco() {
       }, 3000);
     } catch (error) {
       console.error('Error confirmando asistencia:', error);
+      // Si es error 409 (ya registrado), mostrar pantalla especial
+      if (error.response?.status === 409) {
+        setYaRegistrado(true);
+        return;
+      }
       alert('Error al registrar asistencia');
       resetearTodo();
     }
@@ -435,24 +458,50 @@ function Kiosco() {
               </div>
             )}
             
-            <h1>¿Eres tú?</h1>
-            <h2 className="nombre-confirmacion">{miembroSeleccionado.nombre}</h2>
-            <p className="numero-confirmacion">{miembroSeleccionado.numeroFormateado}</p>
-            
-            <div className="botones-kiosco">
-              <button 
-                className="btn-kiosco btn-confirmar"
-                onClick={confirmarAsistencia}
-              >
-                ✓ Sí, registrar asistencia
-              </button>
-              <button 
-                className="btn-kiosco btn-volver"
-                onClick={resetearTodo}
-              >
-                ✗ No soy yo
-              </button>
-            </div>
+            {yaRegistrado ? (
+              <>
+                <div className="aviso-ya-registrado">
+                  <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                    <circle cx="12" cy="12" r="10"/>
+                    <line x1="12" y1="8" x2="12" y2="12"/>
+                    <line x1="12" y1="16" x2="12.01" y2="16"/>
+                  </svg>
+                  <h1>¡Ya registraste tu asistencia hoy!</h1>
+                  <h2 className="nombre-confirmacion">{miembroSeleccionado.nombre}</h2>
+                  <p className="mensaje-ya-registrado">Tu asistencia ya fue registrada anteriormente el día de hoy. No es necesario volver a registrarte.</p>
+                </div>
+                
+                <div className="botones-kiosco">
+                  <button 
+                    className="btn-kiosco btn-volver"
+                    onClick={resetearTodo}
+                  >
+                    ← Volver al inicio
+                  </button>
+                </div>
+              </>
+            ) : (
+              <>
+                <h1>¿Eres tú?</h1>
+                <h2 className="nombre-confirmacion">{miembroSeleccionado.nombre}</h2>
+                <p className="numero-confirmacion">{miembroSeleccionado.numeroFormateado}</p>
+                
+                <div className="botones-kiosco">
+                  <button 
+                    className="btn-kiosco btn-confirmar"
+                    onClick={confirmarAsistencia}
+                  >
+                    ✓ Sí, registrar asistencia
+                  </button>
+                  <button 
+                    className="btn-kiosco btn-volver"
+                    onClick={resetearTodo}
+                  >
+                    ✗ No soy yo
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         )}
 
