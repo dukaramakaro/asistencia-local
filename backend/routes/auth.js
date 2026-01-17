@@ -92,12 +92,12 @@ router.get('/reset-admin', async (req, res) => {
     await ensureUsuariosTable();
 
     const result = await pool.query(
-      `UPDATE usuarios SET password = 'admin123' WHERE usuario = 'admin' RETURNING id`
+      `UPDATE usuarios SET password = 'admin123', activo = true WHERE usuario = 'admin' RETURNING id`
     );
 
     if (result.rows.length > 0) {
       return res.json({ 
-        mensaje: '✅ Contraseña de admin reseteada', 
+        mensaje: '✅ Contraseña de admin reseteada y activado', 
         usuario: 'admin', 
         password: 'admin123',
         aviso: '⚠️ CAMBIA LA CONTRASEÑA Y BORRA ESTE ENDPOINT'
