@@ -56,7 +56,7 @@ const inicializarDB = async () => {
         nombre VARCHAR(255),
         foto_base64 TEXT,
         fecha DATE NOT NULL,
-        hora TEXT,
+        hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         tipo VARCHAR(20) DEFAULT 'miembro'
       )
     `);
@@ -263,25 +263,15 @@ const asistenciasDB = {
   },
 
   crear: async (asistencia) => {
-    // Obtener hora de Cancún como string simple (no timestamp)
-    const horaTexto = new Intl.DateTimeFormat('es-MX', {
-      timeZone: 'America/Cancun',
-      hour: '2-digit',
-      minute: '2-digit',
-      second: '2-digit',
-      hour12: false
-    }).format(new Date());
-
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
-       VALUES ($1, $2, $3, $4, $5, $6)
+       VALUES ($1, $2, $3, $4, NOW(), $5)
        RETURNING *`,
       [
         asistencia.miembroId || null,
         asistencia.nombre || null,
         asistencia.foto || asistencia.fotoBase64 || null,
         fechaCancun(),
-        horaTexto,
         asistencia.tipo || 'miembro'
       ]
     );

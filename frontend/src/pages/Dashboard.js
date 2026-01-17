@@ -325,7 +325,7 @@ function Dashboard() {
                   {[...asistenciasHoy]
                     .sort((a, b) => {
                       if (ordenarAsistencias === 'hora') {
-                        return (b.hora || '').localeCompare(a.hora || '');
+                        return new Date(b.hora) - new Date(a.hora);
                       } else if (ordenarAsistencias === 'nombre') {
                         const nombreA = a.miembro?.nombre || a.nombre || '';
                         const nombreB = b.miembro?.nombre || b.nombre || '';
@@ -349,7 +349,16 @@ function Dashboard() {
                       </td>
                       <td>{asistencia.miembro?.numero || 'N/A'}</td>
                       <td>{asistencia.miembro?.nombre || asistencia.nombre || 'Desconocido'}</td>
-                      <td>{asistencia.hora || 'N/A'}</td>
+                      <td>
+                        {(() => {
+                          const fecha = new Date(asistencia.hora);
+                          return fecha.toLocaleTimeString('es-MX', {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            timeZone: 'America/Cancun'
+                          });
+                        })()}
+                      </td>
                       <td>
                         <span className={`badge ${asistencia.miembro?.tipo || asistencia.tipo}`}>
                           {asistencia.miembro?.tipo || asistencia.tipo || 'N/A'}
