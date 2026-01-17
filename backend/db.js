@@ -263,9 +263,12 @@ const asistenciasDB = {
   },
 
   crear: async (asistencia) => {
-    // Calcular hora actual en Cancún
-    const horaCancun = new Date().toLocaleString('en-US', { timeZone: 'America/Cancun' });
-    const horaTimestamp = new Date(horaCancun);
+    // Calcular hora actual en Cancún (UTC-5)
+    const ahora = new Date();
+    const offsetCancun = -5 * 60; // -5 horas en minutos
+    const offsetActual = ahora.getTimezoneOffset(); // offset del servidor en minutos
+    const diferencia = offsetCancun - offsetActual;
+    const horaCancun = new Date(ahora.getTime() + diferencia * 60 * 1000);
 
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
@@ -276,7 +279,7 @@ const asistenciasDB = {
         asistencia.nombre || null,
         asistencia.foto || asistencia.fotoBase64 || null,
         fechaCancun(),
-        horaTimestamp,
+        horaCancun,
         asistencia.tipo || 'miembro'
       ]
     );
