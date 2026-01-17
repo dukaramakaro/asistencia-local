@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import './Admin.css';
@@ -20,20 +20,9 @@ function Dashboard() {
   const [registrando, setRegistrando] = useState(false);
   const navigate = useNavigate();
 
-  useEffect(() => {
-    const usuarioGuardado = localStorage.getItem('usuario');
-    if (!usuarioGuardado) {
-      navigate('/admin/login');
-      return;
-    }
-    setUsuario(JSON.parse(usuarioGuardado));
-    
-    cargarDatos();
-  }, [navigate]);
-
   const ymdCancun = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Cancun', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
 
-  const cargarDatos = async () => {
+  const cargarDatos = useCallback(async () => {
     try {
       const hoy = ymdCancun();
       
@@ -64,7 +53,18 @@ function Dashboard() {
       console.error('Error al cargar datos:', error);
       setLoading(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const usuarioGuardado = localStorage.getItem('usuario');
+    if (!usuarioGuardado) {
+      navigate('/admin/login');
+      return;
+    }
+    setUsuario(JSON.parse(usuarioGuardado));
+    
+    cargarDatos();
+  }, [navigate, cargarDatos]);
 
   const handleLogout = () => {
     localStorage.removeItem('usuario');
