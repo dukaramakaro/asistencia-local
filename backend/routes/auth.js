@@ -84,4 +84,82 @@ router.get('/setup-admin', async (req, res) => {
   }
 });
 
+// TEMPORAL: Resetear contraseña del admin a 'admin123'
+// Visitar: /api/auth/reset-admin
+// ⚠️ BORRAR ESTE ENDPOINT DESPUÉS DE USAR
+router.get('/reset-admin', async (req, res) => {
+  try {
+    await ensureUsuariosTable();
+
+    const result = await pool.query(
+      `UPDATE usuarios SET password = 'admin123' WHERE usuario = 'admin' RETURNING id`
+    );
+
+    if (result.rows.length > 0) {
+      return res.json({ 
+        mensaje: '✅ Contraseña de admin reseteada', 
+        usuario: 'admin', 
+        password: 'admin123',
+        aviso: '⚠️ CAMBIA LA CONTRASEÑA Y BORRA ESTE ENDPOINT'
+      });
+    } else {
+      // Si no existe admin, crearlo
+      await pool.query(
+        `INSERT INTO usuarios (usuario, password, nombre, rol, activo)
+         VALUES ($1, $2, $3, $4, true)`,
+        ['admin', 'admin123', 'Administrador', 'admin']
+      );
+      return res.json({ 
+        mensaje: '✅ Usuario admin creado', 
+        usuario: 'admin', 
+        password: 'admin123',
+        aviso: '⚠️ CAMBIA LA CONTRASEÑA Y BORRA ESTE ENDPOINT'
+      });
+    }
+  } catch (err) {
+    console.error('RESET-ADMIN ERROR:', err);
+    return res.status(500).json({ error: 'Error reseteando admin', detalle: serializeDbError(err) });
+  }
+});
+
+// TEMPORAL: Crear usuario de prueba
+// Visitar: /api/auth/crear-test
+// ⚠️ BORRAR ESTE ENDPOINT Y EL USUARIO DESPUÉS DE USAR
+router.get('/crear-test', async (req, res) => {
+  try {
+    await ensureUsuariosTable();
+
+    // Borrar si ya existe
+    await pool.query(`DELETE FROM usuarios WHERE usuario = 'test_temporal'`);
+
+    await pool.query(
+      `INSERT INTO usuarios (usuario, password, nombre, rol, activo)
+       VALUES ($1, $2, $3, $4, true)`,
+      ['test_temporal', 'test123', 'Usuario de Prueba', 'admin']
+    );
+
+    return res.json({ 
+      mensaje: '✅ Usuario de prueba creado', 
+      usuario: 'test_temporal', 
+      password: 'test123',
+      aviso: '⚠️ BORRA ESTE USUARIO Y ENDPOINT CUANDO TERMINES'
+    });
+  } catch (err) {
+    console.error('CREAR-TEST ERROR:', err);
+    return res.status(500).json({ error: 'Error creando usuario test', detalle: serializeDbError(err) });
+  }
+});
+
+// TEMPORAL: Borrar usuario de prueba
+// Visitar: /api/auth/borrar-test
+router.get('/borrar-test', async (req, res) => {
+  try {
+    await pool.query(`DELETE FROM usuarios WHERE usuario = 'test_temporal'`);
+    return res.json({ mensaje: '✅ Usuario test_temporal eliminado' });
+  } catch (err) {
+    console.error('BORRAR-TEST ERROR:', err);
+    return res.status(500).json({ error: 'Error borrando usuario test', detalle: serializeDbError(err) });
+  }
+});
+
 module.exports = router;
