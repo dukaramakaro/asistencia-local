@@ -263,15 +263,20 @@ const asistenciasDB = {
   },
 
   crear: async (asistencia) => {
+    // Calcular hora actual en Cancún
+    const horaCancun = new Date().toLocaleString('en-US', { timeZone: 'America/Cancun' });
+    const horaTimestamp = new Date(horaCancun);
+
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
-       VALUES ($1, $2, $3, $4, now() AT TIME ZONE 'America/Cancun', $5)
+       VALUES ($1, $2, $3, $4, $5, $6)
        RETURNING *`,
       [
         asistencia.miembroId || null,
         asistencia.nombre || null,
         asistencia.foto || asistencia.fotoBase64 || null,
         fechaCancun(),
+        horaTimestamp,
         asistencia.tipo || 'miembro'
       ]
     );
