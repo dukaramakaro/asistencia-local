@@ -56,7 +56,7 @@ const inicializarDB = async () => {
         nombre VARCHAR(255),
         foto_base64 TEXT,
         fecha DATE NOT NULL,
-        hora TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        hora TEXT,
         tipo VARCHAR(20) DEFAULT 'miembro'
       )
     `);
@@ -263,12 +263,14 @@ const asistenciasDB = {
   },
 
   crear: async (asistencia) => {
-    // Calcular hora actual en Cancún (UTC-5)
-    const ahora = new Date();
-    const offsetCancun = -5 * 60; // -5 horas en minutos
-    const offsetActual = ahora.getTimezoneOffset(); // offset del servidor en minutos
-    const diferencia = offsetCancun - offsetActual;
-    const horaCancun = new Date(ahora.getTime() + diferencia * 60 * 1000);
+    // Obtener hora de Cancún como string simple (no timestamp)
+    const horaTexto = new Intl.DateTimeFormat('es-MX', {
+      timeZone: 'America/Cancun',
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit',
+      hour12: false
+    }).format(new Date());
 
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
@@ -279,7 +281,7 @@ const asistenciasDB = {
         asistencia.nombre || null,
         asistencia.foto || asistencia.fotoBase64 || null,
         fechaCancun(),
-        horaCancun,
+        horaTexto,
         asistencia.tipo || 'miembro'
       ]
     );
