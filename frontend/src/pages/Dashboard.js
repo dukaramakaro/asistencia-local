@@ -19,6 +19,9 @@ function Dashboard() {
   const [forzarRegistro, setForzarRegistro] = useState(false);
   const [registrando, setRegistrando] = useState(false);
   const [ordenarAsistencias, setOrdenarAsistencias] = useState('hora'); // 'hora', 'nombre', 'numero'
+  const [mostrarExportarRango, setMostrarExportarRango] = useState(false);
+  const [fechaInicio, setFechaInicio] = useState('');
+  const [fechaFin, setFechaFin] = useState('');
   const navigate = useNavigate();
 
   const ymdCancun = () => new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Cancun', year: 'numeric', month: '2-digit', day: '2-digit' }).format(new Date());
@@ -79,6 +82,15 @@ function Dashboard() {
 
   const exportarMiembros = () => {
     window.open(`${API_URL}/exportar/miembros`, '_blank');
+  };
+
+  const exportarAsistenciasRango = () => {
+    if (!fechaInicio || !fechaFin) {
+      alert('Selecciona fecha de inicio y fin');
+      return;
+    }
+    window.open(`${API_URL}/exportar/asistencias?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
+    setMostrarExportarRango(false);
   };
 
   const eliminarAsistencia = async (asistencia) => {
@@ -438,6 +450,14 @@ function Dashboard() {
               <div className="accion-icon">📊</div>
               <div className="accion-label">Exportar Lista Miembros</div>
             </button>
+
+            <button 
+              className="accion-card"
+              onClick={() => setMostrarExportarRango(true)}
+            >
+              <div className="accion-icon">📅</div>
+              <div className="accion-label">Exportar Histórico</div>
+            </button>
           </div>
         </div>
       </div>
@@ -562,6 +582,55 @@ function Dashboard() {
                 {registrando ? '⏳ Registrando...' : '✓ Registrar Asistencia'}
               </button>
               <button className="btn btn-secondary" onClick={cerrarRegistroManual}>
+                Cancelar
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal de exportar por rango de fechas */}
+      {mostrarExportarRango && (
+        <div className="modal-overlay" onClick={() => setMostrarExportarRango(false)}>
+          <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+            <div className="modal-header">
+              <h2>📅 Exportar Histórico de Asistencias</h2>
+              <button className="btn-close" onClick={() => setMostrarExportarRango(false)}>×</button>
+            </div>
+            
+            <p className="modal-descripcion">
+              Selecciona el rango de fechas para exportar las asistencias a Excel.
+            </p>
+
+            <div className="form-group">
+              <label>Fecha de Inicio *</label>
+              <input 
+                type="date"
+                value={fechaInicio}
+                onChange={(e) => setFechaInicio(e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-group">
+              <label>Fecha de Fin *</label>
+              <input 
+                type="date"
+                value={fechaFin}
+                onChange={(e) => setFechaFin(e.target.value)}
+                className="form-input"
+              />
+            </div>
+
+            <div className="form-actions">
+              <button 
+                className="btn btn-primary" 
+                onClick={exportarAsistenciasRango}
+                disabled={!fechaInicio || !fechaFin}
+              >
+                📥 Descargar Excel
+              </button>
+              <button className="btn btn-secondary" onClick={() => setMostrarExportarRango(false)}>
                 Cancelar
               </button>
             </div>
