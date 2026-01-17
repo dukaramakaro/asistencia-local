@@ -265,7 +265,7 @@ const asistenciasDB = {
   crear: async (asistencia) => {
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
-       VALUES ($1, $2, $3, $4, timezone('America/Cancun', now()), $5)
+       VALUES ($1, $2, $3, $4, now() AT TIME ZONE 'America/Cancun', $5)
        RETURNING *`,
       [
         asistencia.miembroId || null,

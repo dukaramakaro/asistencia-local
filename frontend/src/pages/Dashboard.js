@@ -349,7 +349,7 @@ function Dashboard() {
                       </td>
                       <td>{asistencia.miembro?.numero || 'N/A'}</td>
                       <td>{asistencia.miembro?.nombre || asistencia.nombre || 'Desconocido'}</td>
-                      <td>{new Date(asistencia.hora).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit'})}</td>
+                      <td>{new Date(asistencia.hora).toLocaleTimeString('es-MX', {hour: '2-digit', minute:'2-digit', timeZone: 'America/Cancun'})}</td>
                       <td>
                         <span className={`badge ${asistencia.miembro?.tipo || asistencia.tipo}`}>
                           {asistencia.miembro?.tipo || asistencia.tipo || 'N/A'}
