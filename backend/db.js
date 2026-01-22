@@ -332,5 +332,6 @@ inicializarDB();
 module.exports = {
   pool,
   miembrosDB,
-  asistenciasDB
+  asistenciasDB,
+  calcularEdad
 };

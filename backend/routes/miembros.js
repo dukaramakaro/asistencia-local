@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool, miembrosDB } = require('../db');
+const { pool, miembrosDB, calcularEdad } = require('../db');
 
 router.get('/', async (req, res) => {
   try {
@@ -65,9 +65,11 @@ router.put('/:id', async (req, res) => {
     const { rows: exists } = await pool.query('SELECT * FROM miembros WHERE id = $1', [id]);
     if (exists.length === 0) return res.status(404).json({ error: 'Miembro no encontrado' });
 
+    const fechaNacimiento = body.fechaNacimiento ?? exists[0].fecha_nacimiento;
     const campos = {
       nombre: body.nombre ?? exists[0].nombre,
-      fecha_nacimiento: body.fechaNacimiento ?? exists[0].fecha_nacimiento,
+      fecha_nacimiento: fechaNacimiento,
+      edad: calcularEdad(fechaNacimiento),
       telefono: body.telefono ?? exists[0].telefono,
       telefono_emergencia: body.telefonoEmergencia ?? exists[0].telefono_emergencia,
       email: body.observaciones ?? body.email ?? exists[0].email,
@@ -79,16 +81,18 @@ router.put('/:id', async (req, res) => {
       `UPDATE miembros
        SET nombre = $1,
            fecha_nacimiento = $2,
-           telefono = $3,
-           telefono_emergencia = $4,
-           email = $5,
-           foto_base64 = $6,
-           activo = $7
-       WHERE id = $8
+           edad = $3,
+           telefono = $4,
+           telefono_emergencia = $5,
+           email = $6,
+           foto_base64 = $7,
+           activo = $8
+       WHERE id = $9
        RETURNING *`,
       [
         campos.nombre,
         campos.fecha_nacimiento,
+        campos.edad,
         campos.telefono,
         campos.telefono_emergencia,
         campos.email,
