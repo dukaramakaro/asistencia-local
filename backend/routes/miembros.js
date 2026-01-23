@@ -65,14 +65,15 @@ router.put('/:id', async (req, res) => {
     const { rows: exists } = await pool.query('SELECT * FROM miembros WHERE id = $1', [id]);
     if (exists.length === 0) return res.status(404).json({ error: 'Miembro no encontrado' });
 
-    const fechaNacimiento = body.fechaNacimiento ?? exists[0].fecha_nacimiento;
+    // Normalizar valores vacíos a null
+    const fechaNacimiento = body.fechaNacimiento === '' ? null : (body.fechaNacimiento ?? exists[0].fecha_nacimiento);
     const campos = {
       nombre: body.nombre ?? exists[0].nombre,
       fecha_nacimiento: fechaNacimiento,
       edad: calcularEdad(fechaNacimiento),
-      telefono: body.telefono ?? exists[0].telefono,
-      telefono_emergencia: body.telefonoEmergencia ?? exists[0].telefono_emergencia,
-      email: body.observaciones ?? body.email ?? exists[0].email,
+      telefono: body.telefono === '' ? null : (body.telefono ?? exists[0].telefono),
+      telefono_emergencia: body.telefonoEmergencia === '' ? null : (body.telefonoEmergencia ?? exists[0].telefono_emergencia),
+      email: body.observaciones === '' ? null : (body.observaciones ?? body.email ?? exists[0].email),
       foto_base64: body.fotoBase64 ?? body.foto ?? exists[0].foto_base64,
       activo: typeof body.activo === 'boolean' ? body.activo : exists[0].activo
     };
