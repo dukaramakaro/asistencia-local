@@ -103,7 +103,22 @@ router.put('/:id', async (req, res) => {
       ]
     );
 
-    res.json(rows[0]);
+    const m = rows[0];
+    res.json({
+      id: String(m.id),
+      numero: m.numero,
+      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
+      nombre: m.nombre,
+      fechaNacimiento: m.fecha_nacimiento,
+      edad: m.edad,
+      telefono: m.telefono,
+      telefonoEmergencia: m.telefono_emergencia,
+      observaciones: m.email || '',
+      fotoBase64: m.foto_base64,
+      tipo: m.tipo,
+      activo: m.activo,
+      fechaRegistro: m.fecha_registro
+    });
   } catch (error) {
     console.error('Error al actualizar miembro:', error);
     res.status(500).json({ error: 'Error al actualizar miembro', detalle: error.message });
