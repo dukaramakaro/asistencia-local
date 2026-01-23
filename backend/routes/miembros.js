@@ -3,12 +3,13 @@ const router = express.Router();
 const { pool, miembrosDB, calcularEdad } = require('../db');
 
 // Convertir fecha a formato YYYY-MM-DD para inputs type="date"
+// Usa métodos UTC para evitar problemas de zona horaria
 const formatearFecha = (fecha) => {
   if (!fecha) return null;
   const d = new Date(fecha);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
+  const year = d.getUTCFullYear();
+  const month = String(d.getUTCMonth() + 1).padStart(2, '0');
+  const day = String(d.getUTCDate()).padStart(2, '0');
   return `${year}-${month}-${day}`;
 };
 

@@ -8,6 +8,13 @@ import EditarMiembro from '../components/EditarMiembro';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
+// Formatear fecha YYYY-MM-DD a DD/MM/YYYY sin conversión de zona horaria
+const formatearFechaLocal = (fechaStr) => {
+  if (!fechaStr) return '';
+  const [year, month, day] = fechaStr.split('-');
+  return `${day}/${month}/${year}`;
+};
+
 function Miembros() {
   const [miembros, setMiembros] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -432,7 +439,7 @@ function Miembros() {
                     {miembro.fechaNacimiento && (
                       <div className="miembro-detalle">
                         <span className="detalle-label">Nacimiento:</span>
-                        {new Date(miembro.fechaNacimiento).toLocaleDateString('es-MX')}
+                        {formatearFechaLocal(miembro.fechaNacimiento)}
                         {miembro.edad && ` · ${miembro.edad} años`}
                       </div>
                     )}
