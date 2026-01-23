@@ -43,7 +43,7 @@ function Miembros() {
 
   const cargarMiembros = async () => {
     try {
-      const res = await axios.get(`${API_URL}/miembros`);
+      const res = await axios.get(`${API_URL}/miembros?_t=${Date.now()}`);
       setMiembros(res.data);
       setLoading(false);
     } catch (error) {
