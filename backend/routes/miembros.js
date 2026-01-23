@@ -2,6 +2,16 @@ const express = require('express');
 const router = express.Router();
 const { pool, miembrosDB, calcularEdad } = require('../db');
 
+// Convertir fecha a formato YYYY-MM-DD para inputs type="date"
+const formatearFecha = (fecha) => {
+  if (!fecha) return null;
+  const d = new Date(fecha);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
+
 router.get('/', async (req, res) => {
   try {
     const incluirInactivos = String(req.query.inactivos || 'true') === 'true';
@@ -19,7 +29,7 @@ router.get('/', async (req, res) => {
       numero: m.numero,
       numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
       nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
+      fechaNacimiento: formatearFecha(m.fecha_nacimiento),
       edad: m.edad,
       telefono: m.telefono,
       telefonoEmergencia: m.telefono_emergencia,
@@ -109,7 +119,7 @@ router.put('/:id', async (req, res) => {
       numero: m.numero,
       numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
       nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
+      fechaNacimiento: formatearFecha(m.fecha_nacimiento),
       edad: m.edad,
       telefono: m.telefono,
       telefonoEmergencia: m.telefono_emergencia,
