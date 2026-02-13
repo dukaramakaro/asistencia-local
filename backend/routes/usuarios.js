@@ -19,7 +19,7 @@ router.get('/', async (req, res) => {
        FROM usuarios
        ORDER BY nombre ASC`
     );
-    
+
     res.json(rows);
   } catch (err) {
     console.error('Error obteniendo usuarios:', err);
@@ -49,7 +49,7 @@ router.patch('/:id/cambiar-password', async (req, res) => {
       return res.status(404).json({ error: 'Usuario no encontrado' });
     }
 
-    res.json({ 
+    res.json({
       mensaje: 'Contraseña actualizada exitosamente',
       usuario: rows[0]
     });
@@ -99,7 +99,7 @@ router.post('/', async (req, res) => {
 router.patch('/:id/toggle-activo', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     const { rows } = await pool.query(
       `UPDATE usuarios 
        SET activo = NOT activo
@@ -122,11 +122,47 @@ router.patch('/:id/toggle-activo', async (req, res) => {
   }
 });
 
+// Cambiar rol de un usuario
+router.patch('/:id/cambiar-rol', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { nuevoRol } = req.body;
+
+    // Validar que el rol sea uno de los permitidos
+    const rolesPermitidos = ['admin', 'usuario', 'supervisor', 'miembro'];
+    if (!nuevoRol || !rolesPermitidos.includes(nuevoRol)) {
+      return res.status(400).json({
+        error: 'Rol inválido. Los roles permitidos son: admin, usuario, supervisor, miembro'
+      });
+    }
+
+    const { rows } = await pool.query(
+      `UPDATE usuarios 
+       SET rol = $1
+       WHERE id = $2
+       RETURNING id, usuario, nombre, rol, activo`,
+      [nuevoRol, id]
+    );
+
+    if (rows.length === 0) {
+      return res.status(404).json({ error: 'Usuario no encontrado' });
+    }
+
+    res.json({
+      mensaje: 'Rol actualizado exitosamente',
+      usuario: rows[0]
+    });
+  } catch (err) {
+    console.error('Error cambiando rol usuario:', err);
+    res.status(500).json({ error: 'Error al cambiar rol', detalle: serializeDbError(err) });
+  }
+});
+
 // Eliminar usuario permanentemente
 router.delete('/:id', async (req, res) => {
   try {
     const { id } = req.params;
-    
+
     // Verificar que no sea el último usuario admin activo
     const { rows: adminsActivos } = await pool.query(
       `SELECT COUNT(*) as total 
@@ -136,8 +172,8 @@ router.delete('/:id', async (req, res) => {
     );
 
     if (parseInt(adminsActivos[0].total) === 0) {
-      return res.status(400).json({ 
-        error: 'No puedes eliminar el último administrador activo del sistema' 
+      return res.status(400).json({
+        error: 'No puedes eliminar el último administrador activo del sistema'
       });
     }
 
