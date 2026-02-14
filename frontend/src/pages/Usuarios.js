@@ -13,13 +13,15 @@ function Usuarios() {
   const [mostrarFormPassword, setMostrarFormPassword] = useState(null);
   const [nuevaPassword, setNuevaPassword] = useState('');
   const [mostrarFormNuevo, setMostrarFormNuevo] = useState(false);
-  
+  const [mostrarFormRol, setMostrarFormRol] = useState(null);
+  const [nuevoRolSeleccionado, setNuevoRolSeleccionado] = useState('');
+
   // Form nuevo usuario
   const [nuevoUsuario, setNuevoUsuario] = useState('');
   const [nuevoPassword, setNuevoPassword] = useState('');
   const [nuevoNombre, setNuevoNombre] = useState('');
   const [nuevoRol, setNuevoRol] = useState('admin');
-  
+
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -29,7 +31,7 @@ function Usuarios() {
       return;
     }
     setUsuario(JSON.parse(usuarioGuardado));
-    
+
     cargarUsuarios();
   }, [navigate]);
 
@@ -59,7 +61,7 @@ function Usuarios() {
       await axios.patch(`${API_URL}/usuarios/${usuarioId}/cambiar-password`, {
         nuevaPassword
       });
-      
+
       alert('✅ Contraseña actualizada exitosamente');
       setMostrarFormPassword(null);
       setNuevaPassword('');
@@ -104,6 +106,27 @@ function Usuarios() {
     }
   };
 
+  const cambiarRol = async (usuarioId) => {
+    if (!nuevoRolSeleccionado) {
+      alert('Por favor selecciona un rol');
+      return;
+    }
+
+    try {
+      await axios.patch(`${API_URL}/usuarios/${usuarioId}/cambiar-rol`, {
+        nuevoRol: nuevoRolSeleccionado
+      });
+
+      alert('✅ Rol actualizado exitosamente');
+      setMostrarFormRol(null);
+      setNuevoRolSeleccionado('');
+      cargarUsuarios();
+    } catch (error) {
+      console.error('Error al cambiar rol:', error);
+      alert(error.response?.data?.error || 'Error al cambiar rol');
+    }
+  };
+
   const eliminarUsuario = async (usr) => {
     const confirmar = window.confirm(
       `⚠️ ELIMINAR USUARIO PERMANENTEMENTE ⚠️\n\n` +
@@ -139,7 +162,7 @@ function Usuarios() {
           <img src={logoLMTLSS} alt="LMTLSS" className="nav-logo" />
           <span>LMTLSS Admin</span>
         </div>
-        
+
         <div className="nav-info">
           <span>Hola, {usuario?.nombre || 'Administrador'}</span>
         </div>
@@ -155,7 +178,7 @@ function Usuarios() {
       <div className="admin-content">
         <div className="section-header">
           <h1>👥 Gestión de Usuarios</h1>
-          <button 
+          <button
             className="btn btn-primary"
             onClick={() => setMostrarFormNuevo(!mostrarFormNuevo)}
           >
@@ -213,8 +236,8 @@ function Usuarios() {
                 <button type="submit" className="btn btn-primary">
                   ✓ Crear Usuario
                 </button>
-                <button 
-                  type="button" 
+                <button
+                  type="button"
                   className="btn btn-secondary"
                   onClick={() => setMostrarFormNuevo(false)}
                 >
@@ -227,14 +250,14 @@ function Usuarios() {
 
         <div className="section">
           <h2>Lista de Usuarios ({usuarios.length})</h2>
-          
+
           {usuarios.length === 0 ? (
             <p className="no-data">No hay usuarios registrados</p>
           ) : (
             <div className="usuarios-grid">
               {usuarios.map((usr) => (
-                <div 
-                  key={usr.id} 
+                <div
+                  key={usr.id}
                   className={`usuario-card ${usr.activo ? '' : 'inactivo'}`}
                 >
                   <div className="usuario-info">
@@ -245,7 +268,7 @@ function Usuarios() {
                     <div className="usuario-detalle">
                       <span className="detalle-label">Rol:</span> {usr.rol}
                     </div>
-                    
+
                     <div className="usuario-badges">
                       <span className={`badge ${usr.activo ? 'activo' : 'inactivo'}`}>
                         {usr.activo ? 'Activo' : 'Inactivo'}
@@ -264,13 +287,13 @@ function Usuarios() {
                           className="password-input"
                           minLength="4"
                         />
-                        <button 
+                        <button
                           className="btn btn-sm btn-primary"
                           onClick={() => cambiarPassword(usr.id)}
                         >
                           ✓ Guardar
                         </button>
-                        <button 
+                        <button
                           className="btn btn-sm btn-secondary"
                           onClick={() => {
                             setMostrarFormPassword(null);
@@ -280,9 +303,39 @@ function Usuarios() {
                           ✕
                         </button>
                       </div>
+                    ) : mostrarFormRol === usr.id ? (
+                      <div className="password-form">
+                        <select
+                          value={nuevoRolSeleccionado}
+                          onChange={(e) => setNuevoRolSeleccionado(e.target.value)}
+                          className="password-input"
+                          style={{ padding: '8px' }}
+                        >
+                          <option value="">Seleccionar rol...</option>
+                          <option value="admin">Administrador</option>
+                          <option value="supervisor">Supervisor</option>
+                          <option value="usuario">Usuario</option>
+                          <option value="miembro">Miembro</option>
+                        </select>
+                        <button
+                          className="btn btn-sm btn-primary"
+                          onClick={() => cambiarRol(usr.id)}
+                        >
+                          ✓ Guardar
+                        </button>
+                        <button
+                          className="btn btn-sm btn-secondary"
+                          onClick={() => {
+                            setMostrarFormRol(null);
+                            setNuevoRolSeleccionado('');
+                          }}
+                        >
+                          ✕
+                        </button>
+                      </div>
                     ) : (
                       <>
-                        <button 
+                        <button
                           className="btn btn-sm btn-warning"
                           onClick={() => setMostrarFormPassword(usr.id)}
                           title="Cambiar contraseña"
@@ -290,7 +343,19 @@ function Usuarios() {
                           🔑 Cambiar Contraseña
                         </button>
 
-                        <button 
+                        <button
+                          className="btn btn-sm btn-info"
+                          onClick={() => {
+                            setMostrarFormRol(usr.id);
+                            setNuevoRolSeleccionado(usr.rol);
+                          }}
+                          title="Cambiar rol"
+                          style={{ backgroundColor: '#0288D1' }}
+                        >
+                          🔄 Cambiar Rol
+                        </button>
+
+                        <button
                           className={`btn btn-sm ${usr.activo ? 'btn-danger' : 'btn-success'}`}
                           onClick={() => toggleActivo(usr.id)}
                           title={usr.activo ? 'Desactivar usuario' : 'Activar usuario'}
@@ -298,11 +363,11 @@ function Usuarios() {
                           {usr.activo ? '🚫 Desactivar' : '✓ Activar'}
                         </button>
 
-                        <button 
+                        <button
                           className="btn btn-sm btn-danger"
                           onClick={() => eliminarUsuario(usr)}
                           title="Eliminar usuario permanentemente"
-                          style={{backgroundColor: '#D32F2F'}}
+                          style={{ backgroundColor: '#D32F2F' }}
                         >
                           🗑️ Eliminar
                         </button>
