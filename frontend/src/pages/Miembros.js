@@ -167,6 +167,24 @@ function Miembros() {
     }
   };
 
+  const promoverAMiembro = async (miembro) => {
+    const confirmar = window.confirm(
+      `¿Promover a ${miembro.nombre} de Visitante a Miembro?`
+    );
+    if (!confirmar) return;
+
+    try {
+      await axios.put(`${API_URL}/miembros/${miembro.id}`, {
+        tipo: 'miembro'
+      });
+      alert(`✅ ${miembro.nombre} ahora es Miembro`);
+      cargarMiembros();
+    } catch (error) {
+      console.error('Error al promover a miembro:', error);
+      alert('Error al promover a miembro');
+    }
+  };
+
   const hacerAdmin = async (miembro) => {
     if (!adminUsuario || !adminPassword || adminPassword.length < 4) {
       alert('Ingresa usuario y contraseña (mínimo 4 caracteres)');
@@ -499,7 +517,7 @@ function Miembros() {
                     </div>
                   </div>
 
-                  {hacerAdminId === miembro.id && (
+                  {hacerAdminId === miembro.id && miembro.tipo === 'miembro' && (
                     <div className="password-form" style={{ marginBottom: '10px', padding: '10px', background: '#FFF3E0', borderRadius: '8px' }}>
                       <strong style={{ display: 'block', marginBottom: '8px' }}>👑 Crear cuenta admin para {miembro.nombre}</strong>
                       <input
@@ -551,20 +569,40 @@ function Miembros() {
                       </svg>
                     </button>
 
-                    <button
-                      className="btn-icon btn-icon-primary"
-                      onClick={() => {
-                        setHacerAdminId(miembro.id);
-                        setAdminUsuario('');
-                        setAdminPassword('');
-                      }}
-                      title="Hacer Administrador"
-                      style={{ color: '#FF8F00' }}
-                    >
-                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                        <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
-                      </svg>
-                    </button>
+                    {/* Visitante → puede subir a Miembro */}
+                    {miembro.tipo === 'visitante' && (
+                      <button
+                        className="btn-icon btn-icon-primary"
+                        onClick={() => promoverAMiembro(miembro)}
+                        title="Promover a Miembro"
+                        style={{ color: '#2E7D32' }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+                          <circle cx="8.5" cy="7" r="4"/>
+                          <line x1="20" y1="8" x2="20" y2="14"/>
+                          <line x1="23" y1="11" x2="17" y2="11"/>
+                        </svg>
+                      </button>
+                    )}
+
+                    {/* Miembro → puede subir a Admin */}
+                    {miembro.tipo === 'miembro' && (
+                      <button
+                        className="btn-icon btn-icon-primary"
+                        onClick={() => {
+                          setHacerAdminId(miembro.id);
+                          setAdminUsuario('');
+                          setAdminPassword('');
+                        }}
+                        title="Hacer Administrador"
+                        style={{ color: '#FF8F00' }}
+                      >
+                        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                          <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
+                        </svg>
+                      </button>
+                    )}
 
                     <button 
                       className="btn-icon btn-icon-success"
