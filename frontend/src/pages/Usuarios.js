@@ -229,6 +229,7 @@ function Usuarios() {
                 <select value={nuevoRol} onChange={(e) => setNuevoRol(e.target.value)}>
                   <option value="admin">Administrador</option>
                   <option value="miembro">Miembro</option>
+                  <option value="usuario">Usuario</option>
                   <option value="visitante">Visitante</option>
                 </select>
               </div>
@@ -315,6 +316,7 @@ function Usuarios() {
                           <option value="">Seleccionar rol...</option>
                           <option value="admin">Administrador</option>
                           <option value="miembro">Miembro</option>
+                          <option value="usuario">Usuario</option>
                           <option value="visitante">Visitante</option>
                         </select>
                         <button
