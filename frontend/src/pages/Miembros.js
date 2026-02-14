@@ -23,6 +23,9 @@ function Miembros() {
   const [mostrarInactivos, setMostrarInactivos] = useState(true);
   const [miembroEditando, setMiembroEditando] = useState(null);
   const [ordenarPor, setOrdenarPor] = useState('nombre'); // 'nombre' o 'numero'
+  const [hacerAdminId, setHacerAdminId] = useState(null);
+  const [adminUsuario, setAdminUsuario] = useState('');
+  const [adminPassword, setAdminPassword] = useState('');
   
   // Form states
   const [nombre, setNombre] = useState('');
@@ -161,6 +164,30 @@ function Miembros() {
     } catch (error) {
       alert('Error al eliminar miembro permanentemente');
       console.error(error);
+    }
+  };
+
+  const hacerAdmin = async (miembro) => {
+    if (!adminUsuario || !adminPassword || adminPassword.length < 4) {
+      alert('Ingresa usuario y contraseña (mínimo 4 caracteres)');
+      return;
+    }
+
+    try {
+      await axios.post(`${API_URL}/usuarios`, {
+        usuario: adminUsuario,
+        password: adminPassword,
+        nombre: miembro.nombre,
+        rol: 'admin'
+      });
+
+      alert(`✅ ${miembro.nombre} ahora tiene cuenta de administrador`);
+      setHacerAdminId(null);
+      setAdminUsuario('');
+      setAdminPassword('');
+    } catch (error) {
+      console.error('Error al crear admin:', error);
+      alert(error.response?.data?.error || 'Error al crear cuenta admin');
     }
   };
 
@@ -472,8 +499,48 @@ function Miembros() {
                     </div>
                   </div>
 
+                  {hacerAdminId === miembro.id && (
+                    <div className="password-form" style={{ marginBottom: '10px', padding: '10px', background: '#FFF3E0', borderRadius: '8px' }}>
+                      <strong style={{ display: 'block', marginBottom: '8px' }}>👑 Crear cuenta admin para {miembro.nombre}</strong>
+                      <input
+                        type="text"
+                        value={adminUsuario}
+                        onChange={(e) => setAdminUsuario(e.target.value)}
+                        placeholder="Usuario (login)"
+                        className="password-input"
+                        style={{ marginBottom: '6px' }}
+                      />
+                      <input
+                        type="password"
+                        value={adminPassword}
+                        onChange={(e) => setAdminPassword(e.target.value)}
+                        placeholder="Contraseña (mín. 4)"
+                        className="password-input"
+                        style={{ marginBottom: '6px' }}
+                        minLength="4"
+                      />
+                      <button
+                        className="btn btn-sm btn-primary"
+                        onClick={() => hacerAdmin(miembro)}
+                      >
+                        ✓ Crear Admin
+                      </button>
+                      <button
+                        className="btn btn-sm btn-secondary"
+                        onClick={() => {
+                          setHacerAdminId(null);
+                          setAdminUsuario('');
+                          setAdminPassword('');
+                        }}
+                        style={{ marginLeft: '6px' }}
+                      >
+                        ✕ Cancelar
+                      </button>
+                    </div>
+                  )}
+
                   <div className="miembro-acciones">
-                    <button 
+                    <button
                       className="btn-icon btn-icon-primary"
                       onClick={() => setMiembroEditando(miembro)}
                       title="Editar miembro"
@@ -481,6 +548,21 @@ function Miembros() {
                       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
                         <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+                      </svg>
+                    </button>
+
+                    <button
+                      className="btn-icon btn-icon-primary"
+                      onClick={() => {
+                        setHacerAdminId(miembro.id);
+                        setAdminUsuario('');
+                        setAdminPassword('');
+                      }}
+                      title="Hacer Administrador"
+                      style={{ color: '#FF8F00' }}
+                    >
+                      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                        <path d="M12 2l3 7h7l-5.5 4 2 7L12 16l-6.5 4 2-7L2 9h7z"/>
                       </svg>
                     </button>
 
