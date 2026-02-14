@@ -129,10 +129,10 @@ router.patch('/:id/cambiar-rol', async (req, res) => {
     const { nuevoRol } = req.body;
 
     // Validar que el rol sea uno de los permitidos
-    const rolesPermitidos = ['admin', 'usuario', 'supervisor', 'miembro'];
+    const rolesPermitidos = ['admin', 'miembro', 'visitante'];
     if (!nuevoRol || !rolesPermitidos.includes(nuevoRol)) {
       return res.status(400).json({
-        error: 'Rol inválido. Los roles permitidos son: admin, usuario, supervisor, miembro'
+        error: 'Rol inválido. Los roles permitidos son: admin, miembro, visitante'
       });
     }
 

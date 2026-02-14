@@ -952,6 +952,16 @@
   background: #D32F2F;
 }
 
+.btn-info {
+  background: #0288D1;
+  color: white;
+}
+
+.btn-info:hover {
+  background: #0277BD;
+  box-shadow: 0 4px 12px rgba(2, 136, 209, 0.3);
+}
+
 /* ACCIONES EN TABLA */
 .acciones-tabla {
   display: flex;
