@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const { pool, miembrosDB, calcularEdad } = require('../db');
+const { pool, miembrosDB, calcularEdad, COLS_MIEMBRO } = require('../db');
 
 // Convertir fecha a formato YYYY-MM-DD para inputs type="date"
 // Usa métodos UTC para evitar problemas de zona horaria
@@ -16,9 +16,11 @@ const formatearFecha = (fecha) => {
 router.get('/', async (req, res) => {
   try {
     const incluirInactivos = String(req.query.inactivos || 'true') === 'true';
+    // Las fotos pesan mucho: solo se envían si la pantalla las pide con ?fotos=1
+    const incluirFotos = req.query.fotos === '1' || req.query.fotos === 'true';
 
     const { rows } = await pool.query(
-      `SELECT *
+      `SELECT ${COLS_MIEMBRO}, (foto_base64 IS NOT NULL) AS tiene_foto${incluirFotos ? ', foto_base64' : ''}
        FROM miembros
        WHERE ($1::boolean = true) OR (activo = true)
        ORDER BY CAST(numero AS INT) ASC`,
@@ -35,6 +37,7 @@ router.get('/', async (req, res) => {
       telefono: m.telefono,
       telefonoEmergencia: m.telefono_emergencia,
       observaciones: m.email || '',
+      tieneFoto: Boolean(m.tiene_foto),
       fotoBase64: m.foto_base64,
       tipo: m.tipo,
       activo: m.activo,
@@ -43,6 +46,21 @@ router.get('/', async (req, res) => {
   } catch (error) {
     console.error('Error al obtener miembros:', error);
     res.status(500).json({ error: 'Error al obtener miembros', detalle: error.message });
+  }
+});
+
+// Foto de un solo miembro (la pantalla la pide cuando la tarjeta aparece en pantalla)
+router.get('/:id/foto', async (req, res) => {
+  try {
+    if (!/^\d{1,9}$/.test(req.params.id)) return res.status(400).json({ error: 'Identificador inválido' });
+
+    const { rows } = await pool.query('SELECT foto_base64 FROM miembros WHERE id = $1', [req.params.id]);
+    if (rows.length === 0) return res.status(404).json({ error: 'Miembro no encontrado' });
+
+    res.json({ fotoBase64: rows[0].foto_base64 || null });
+  } catch (error) {
+    console.error('Error al obtener foto:', error);
+    res.status(500).json({ error: 'Error al obtener la foto' });
   }
 });
 

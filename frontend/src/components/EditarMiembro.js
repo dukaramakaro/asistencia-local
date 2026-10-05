@@ -1,6 +1,8 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
+import { obtenerFoto, olvidarFoto } from './FotoMiembro';
+import { reducirImagen, leerArchivoReducido } from '../utils/imagen';
 import '../pages/Admin.css';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
@@ -17,8 +19,20 @@ function EditarMiembro({ miembro, onClose, onActualizar }) {
   
   const webcamRef = useRef(null);
 
-  const capturarFoto = () => {
-    const imagenSrc = webcamRef.current.getScreenshot();
+  // La lista ya no trae las fotos; se pide la de este miembro al abrir la edición.
+  // Si mientras tanto el usuario eligió otra foto, se respeta la nueva.
+  useEffect(() => {
+    if (!miembro.fotoBase64 && miembro.tieneFoto) {
+      obtenerFoto(miembro.id)
+        .then((fotoActual) => {
+          if (fotoActual) setFoto((actual) => actual || fotoActual);
+        })
+        .catch(() => {});
+    }
+  }, [miembro.id, miembro.fotoBase64, miembro.tieneFoto]);
+
+  const capturarFoto = async () => {
+    const imagenSrc = await reducirImagen(webcamRef.current.getScreenshot());
     setFoto(imagenSrc);
     setCapturandoFoto(false);
   };
@@ -38,6 +52,7 @@ function EditarMiembro({ miembro, onClose, onActualizar }) {
       };
 
       await axios.put(`${API_URL}/miembros/${miembro.id}`, datosActualizados);
+      olvidarFoto(miembro.id); // para que la lista no muestre la foto anterior
       
       alert('Miembro actualizado exitosamente');
       onActualizar();
@@ -131,11 +146,7 @@ function EditarMiembro({ miembro, onClose, onActualizar }) {
                     onChange={(e) => {
                       const file = e.target.files[0];
                       if (file) {
-                        const reader = new FileReader();
-                        reader.onloadend = () => {
-                          setFoto(reader.result);
-                        };
-                        reader.readAsDataURL(file);
+                        leerArchivoReducido(file).then(setFoto);
                       }
                     }}
                   />

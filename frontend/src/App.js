@@ -5,7 +5,12 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import Miembros from './pages/Miembros';
 import Usuarios from './pages/Usuarios';
+import { haySesion } from './api';
 import './App.css';
+
+// Sin sesión iniciada, cualquier pantalla de administración manda al login
+const RutaProtegida = ({ children }) =>
+  haySesion() ? children : <Navigate to="/admin/login" replace />;
 
 function App() {
   return (
@@ -17,9 +22,9 @@ function App() {
         
         {/* Rutas admin - Panel de supervisores */}
         <Route path="/admin/login" element={<Login />} />
-        <Route path="/admin/dashboard" element={<Dashboard />} />
-        <Route path="/admin/miembros" element={<Miembros />} />
-        <Route path="/admin/usuarios" element={<Usuarios />} />
+        <Route path="/admin/dashboard" element={<RutaProtegida><Dashboard /></RutaProtegida>} />
+        <Route path="/admin/miembros" element={<RutaProtegida><Miembros /></RutaProtegida>} />
+        <Route path="/admin/usuarios" element={<RutaProtegida><Usuarios /></RutaProtegida>} />
         
         {/* Ruta por defecto */}
         <Route path="/" element={<Navigate to="/kiosco" replace />} />

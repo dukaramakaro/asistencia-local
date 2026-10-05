@@ -61,12 +61,16 @@ const inicializarDB = async () => {
       )
     `);
 
-    const { rows } = await pool.query('SELECT id FROM usuarios WHERE usuario = $1 LIMIT 1', ['admin']);
+    // Usuario inicial SOLO en una instalación nueva (tabla vacía).
+    // Antes se recreaba "admin/admin123" en cada arranque si no existía un usuario
+    // llamado "admin", lo que dejaba una puerta abierta con contraseña conocida.
+    const { rows } = await pool.query('SELECT 1 FROM usuarios LIMIT 1');
     if (rows.length === 0) {
       await pool.query(
         'INSERT INTO usuarios (usuario, password, nombre, rol, activo) VALUES ($1, $2, $3, $4, true)',
         ['admin', 'admin123', 'Administrador', 'admin']
       );
+      console.warn('⚠️ Instalación nueva: se creó el usuario admin / admin123. Cambia la contraseña al entrar.');
     }
 
     console.log('✅ Base de datos inicializada (usuarios/miembros/asistencias)');
@@ -86,84 +90,82 @@ const calcularEdad = (fechaNacimiento) => {
   return edad;
 };
 
+// ---------------------------------------------------------------------------
+// IMPORTANTE (tráfico de red de Neon):
+// foto_base64 pesa cientos de KB por fila. Nunca se usa SELECT * en miembros:
+// las columnas se listan explícitamente y la foto se pide solo cuando hace falta.
+// ---------------------------------------------------------------------------
+const COLS_MIEMBRO =
+  'id, numero, nombre, fecha_nacimiento, edad, telefono, telefono_emergencia, email, tipo, activo, fecha_registro';
+
+const mapMiembro = (m) => ({
+  id: String(m.id),
+  numero: m.numero,
+  numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
+  nombre: m.nombre,
+  fechaNacimiento: m.fecha_nacimiento,
+  edad: calcularEdad(m.fecha_nacimiento),
+  telefono: m.telefono,
+  telefonoEmergencia: m.telefono_emergencia,
+  email: m.email,
+  observaciones: m.email || '',
+  // Solo viene si la consulta pidió la foto (si no, queda undefined y no se envía)
+  fotoBase64: m.foto_base64,
+  tipo: m.tipo,
+  activo: m.activo,
+  fechaRegistro: m.fecha_registro
+});
+
 // Miembros
 const miembrosDB = {
-  todas: async () => {
-    const { rows } = await pool.query('SELECT * FROM miembros ORDER BY nombre ASC');
-    return rows.map((m) => ({
-      id: String(m.id),
-      numero: m.numero,
-      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
-      nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
-      edad: calcularEdad(m.fecha_nacimiento),
-      telefono: m.telefono,
-      telefonoEmergencia: m.telefono_emergencia,
-      email: m.email,
-      fotoBase64: m.foto_base64,
-      tipo: m.tipo,
-      activo: m.activo,
-      fechaRegistro: m.fecha_registro
-    }));
-  },
-
-  buscarPorId: async (id) => {
-    const { rows } = await pool.query('SELECT * FROM miembros WHERE id = $1', [id]);
-    if (rows.length === 0) return null;
-    const m = rows[0];
-    return {
-      id: String(m.id),
-      numero: m.numero,
-      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
-      nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
-      edad: calcularEdad(m.fecha_nacimiento),
-      telefono: m.telefono,
-      telefonoEmergencia: m.telefono_emergencia,
-      email: m.email,
-      fotoBase64: m.foto_base64,
-      tipo: m.tipo,
-      activo: m.activo,
-      fechaRegistro: m.fecha_registro
-    };
-  },
-
-  buscarPorNumero: async (numero) => {
+  // La exportación a Excel necesita fotos, por eso fotos=true por defecto aquí
+  todas: async ({ fotos = true } = {}) => {
     const { rows } = await pool.query(
-      'SELECT * FROM miembros WHERE numero = $1 AND activo = true LIMIT 1',
-      [numero]
+      `SELECT ${COLS_MIEMBRO}${fotos ? ', foto_base64' : ''} FROM miembros ORDER BY nombre ASC`
+    );
+    return rows.map(mapMiembro);
+  },
+
+  buscarPorId: async (id, { fotos = false } = {}) => {
+    const { rows } = await pool.query(
+      `SELECT ${COLS_MIEMBRO}${fotos ? ', foto_base64' : ''} FROM miembros WHERE id = $1`,
+      [id]
     );
     if (rows.length === 0) return null;
-    const m = rows[0];
-    return {
-      id: String(m.id),
-      numero: m.numero,
-      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
-      nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
-      edad: calcularEdad(m.fecha_nacimiento),
-      telefono: m.telefono,
-      telefonoEmergencia: m.telefono_emergencia,
-      email: m.email,
-      fotoBase64: m.foto_base64,
-      tipo: m.tipo,
-      activo: m.activo
-    };
+    return mapMiembro(rows[0]);
   },
 
-  buscarPorNombre: async (nombre) => {
+  // Acepta "1", "0001" o "V-0001": se comparan solo los dígitos, con y sin ceros a la izquierda
+  buscarPorNumero: async (numero, { fotos = false } = {}) => {
+    const digitos = String(numero || '').replace(/[^0-9]/g, '');
+    if (!digitos) return null;
+
     const { rows } = await pool.query(
-      'SELECT * FROM miembros WHERE LOWER(nombre) LIKE $1 AND activo = true LIMIT 10',
-      [`%${String(nombre || '').toLowerCase()}%`]
+      `SELECT ${COLS_MIEMBRO}${fotos ? ', foto_base64' : ''}
+       FROM miembros
+       WHERE (numero = $1 OR numero = $2) AND activo = true
+       LIMIT 1`,
+      [digitos, digitos.padStart(4, '0')]
     );
-    return rows.map((m) => ({
-      id: String(m.id),
-      numero: m.numero,
-      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
-      nombre: m.nombre,
-      fotoBase64: m.foto_base64,
-      tipo: m.tipo
-    }));
+    if (rows.length === 0) return null;
+    return mapMiembro(rows[0]);
+  },
+
+  // Búsqueda sin distinguir mayúsculas ni acentos. Nunca trae fotos.
+  buscarPorNombre: async (texto) => {
+    const limpio = String(texto || '').trim().toLowerCase().replace(/[\\%_]/g, '\\$&');
+    if (!limpio) return [];
+
+    const { rows } = await pool.query(
+      `SELECT id, numero, nombre, tipo
+       FROM miembros
+       WHERE translate(lower(nombre), 'áéíóúüñ', 'aeiouun') LIKE '%' || translate($1, 'áéíóúüñ', 'aeiouun') || '%'
+         AND activo = true
+       ORDER BY nombre ASC
+       LIMIT 10`,
+      [limpio]
+    );
+    return rows.map(mapMiembro);
   },
 
   crear: async (miembro) => {
@@ -175,11 +177,12 @@ const miembrosDB = {
     const numero = String(siguienteNumero).padStart(4, '0');
     const edad = calcularEdad(miembro.fechaNacimiento);
 
+    // RETURNING sin la foto: no hace falta que la base nos devuelva lo que acabamos de enviarle
     const { rows } = await pool.query(
       `INSERT INTO miembros (
         numero, nombre, fecha_nacimiento, edad, telefono, telefono_emergencia, email, foto_base64, tipo, activo
       ) VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,true)
-      RETURNING *`,
+      RETURNING ${COLS_MIEMBRO}`,
       [
         numero,
         miembro.nombre,
@@ -193,65 +196,74 @@ const miembrosDB = {
       ]
     );
 
-    const m = rows[0];
-    return {
-      id: String(m.id),
-      numero: m.numero,
-      numeroFormateado: m.tipo === 'visitante' ? `V-${m.numero}` : m.numero,
-      nombre: m.nombre,
-      fechaNacimiento: m.fecha_nacimiento,
-      edad: m.edad,
-      telefono: m.telefono,
-      telefonoEmergencia: m.telefono_emergencia,
-      email: m.email,
-      fotoBase64: m.foto_base64,
-      tipo: m.tipo,
-      activo: m.activo,
-      fechaRegistro: m.fecha_registro
-    };
+    return mapMiembro(rows[0]);
   }
 };
 
+// Convierte una fila del JOIN asistencias + miembros al formato que usa el frontend
+const mapAsistenciaJoin = (a) => ({
+  id: String(a.id),
+  miembroId: a.miembro_id ? String(a.miembro_id) : null,
+  nombre: a.nombre,
+  fotoBase64: a.foto !== undefined ? a.foto : undefined,
+  fecha: a.fecha,
+  hora: a.hora,
+  tipo: a.tipo,
+  miembro: a.miembro_id
+    ? mapMiembro({
+        id: a.miembro_id,
+        numero: a.m_numero,
+        nombre: a.m_nombre,
+        fecha_nacimiento: a.m_fecha_nacimiento,
+        telefono: a.m_telefono,
+        telefono_emergencia: a.m_telefono_emergencia,
+        email: a.m_email,
+        tipo: a.m_tipo,
+        activo: a.m_activo,
+        fecha_registro: a.m_fecha_registro
+      })
+    : null
+});
+
 // Asistencias
 const asistenciasDB = {
+  // Una sola consulta (JOIN) en lugar de una por cada asistencia.
+  // fotos=true solo para exportar a Excel; en pantalla no se muestran fotos.
   todas: async (filtros = {}) => {
-    let query = 'SELECT * FROM asistencias';
+    const incluirFotos = filtros.fotos === true;
+
+    let query = `
+      SELECT a.id, a.miembro_id, a.nombre, a.fecha, a.hora, a.tipo,
+             m.numero AS m_numero, m.nombre AS m_nombre, m.fecha_nacimiento AS m_fecha_nacimiento,
+             m.telefono AS m_telefono, m.telefono_emergencia AS m_telefono_emergencia,
+             m.email AS m_email, m.tipo AS m_tipo, m.activo AS m_activo, m.fecha_registro AS m_fecha_registro
+             ${incluirFotos ? ', COALESCE(a.foto_base64, m.foto_base64) AS foto' : ''}
+      FROM asistencias a
+      LEFT JOIN miembros m ON m.id = a.miembro_id`;
+
     const conditions = [];
     const values = [];
     let idx = 1;
 
     if (filtros.fecha) {
-      conditions.push(`fecha = $${idx++}`);
+      conditions.push(`a.fecha = $${idx++}`);
       values.push(filtros.fecha);
-    } else if (filtros.fechaInicio && filtros.fechaFin) {
-      conditions.push(`fecha >= $${idx++} AND fecha <= $${idx++}`);
-      values.push(filtros.fechaInicio, filtros.fechaFin);
+    } else {
+      if (filtros.fechaInicio) {
+        conditions.push(`a.fecha >= $${idx++}`);
+        values.push(filtros.fechaInicio);
+      }
+      if (filtros.fechaFin) {
+        conditions.push(`a.fecha <= $${idx++}`);
+        values.push(filtros.fechaFin);
+      }
     }
 
     if (conditions.length > 0) query += ' WHERE ' + conditions.join(' AND ');
-    query += ' ORDER BY hora DESC';
+    query += ' ORDER BY a.hora DESC';
 
     const { rows } = await pool.query(query, values);
-
-    const asistencias = await Promise.all(
-      rows.map(async (a) => {
-        let miembro = null;
-        if (a.miembro_id) miembro = await miembrosDB.buscarPorId(a.miembro_id);
-
-        return {
-          id: String(a.id),
-          miembroId: a.miembro_id ? String(a.miembro_id) : null,
-          nombre: a.nombre,
-          fotoBase64: a.foto_base64,
-          fecha: a.fecha,
-          hora: a.hora,
-          tipo: a.tipo,
-          miembro
-        };
-      })
-    );
-
-    return asistencias;
+    return rows.map(mapAsistenciaJoin);
   },
 
   verificarAsistenciaHoy: async (miembroId) => {
@@ -262,11 +274,12 @@ const asistenciasDB = {
     return rows.length > 0;
   },
 
+  // Ya no se copia la foto del miembro en cada asistencia: la foto vive solo en "miembros"
   crear: async (asistencia) => {
     const { rows } = await pool.query(
       `INSERT INTO asistencias (miembro_id, nombre, foto_base64, fecha, hora, tipo)
        VALUES ($1, $2, $3, $4, NOW(), $5)
-       RETURNING *`,
+       RETURNING id, miembro_id, nombre, fecha, hora, tipo`,
       [
         asistencia.miembroId || null,
         asistencia.nombre || null,
@@ -284,7 +297,6 @@ const asistenciasDB = {
       id: String(a.id),
       miembroId: a.miembro_id ? String(a.miembro_id) : null,
       nombre: a.nombre,
-      fotoBase64: a.foto_base64,
       fecha: a.fecha,
       hora: a.hora,
       tipo: a.tipo,
@@ -294,12 +306,12 @@ const asistenciasDB = {
 
   actualizar: async (id, datos) => {
     const { rows } = await pool.query(
-      `UPDATE asistencias SET 
+      `UPDATE asistencias SET
         miembro_id = COALESCE($2, miembro_id),
         nombre = COALESCE($3, nombre),
         tipo = COALESCE($4, tipo)
        WHERE id = $1
-       RETURNING *`,
+       RETURNING id, miembro_id, nombre, fecha, hora, tipo`,
       [id, datos.miembroId || null, datos.nombre || null, datos.tipo || null]
     );
 
@@ -313,7 +325,6 @@ const asistenciasDB = {
       id: String(a.id),
       miembroId: a.miembro_id ? String(a.miembro_id) : null,
       nombre: a.nombre,
-      fotoBase64: a.foto_base64,
       fecha: a.fecha,
       hora: a.hora,
       tipo: a.tipo,
@@ -333,5 +344,6 @@ module.exports = {
   pool,
   miembrosDB,
   asistenciasDB,
-  calcularEdad
+  calcularEdad,
+  COLS_MIEMBRO
 };

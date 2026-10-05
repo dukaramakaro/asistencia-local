@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const { pool } = require('../db');
+const { crearToken, limitar } = require('../seguridad');
 
 async function ensureUsuariosTable() {
   await pool.query(`
@@ -33,7 +34,15 @@ function serializeDbError(err) {
   };
 }
 
-router.post('/login', async (req, res) => {
+// Máx. 10 intentos FALLIDOS cada 15 minutos por IP (los logins correctos no cuentan)
+const limiteLogin = limitar({
+  max: 10,
+  ventanaMs: 15 * 60 * 1000,
+  contarSoloErrores: true,
+  mensaje: 'Demasiados intentos fallidos. Espera unos minutos e inténtalo de nuevo.'
+});
+
+router.post('/login', limiteLogin, async (req, res) => {
   try {
     await ensureUsuariosTable();
 
@@ -52,9 +61,12 @@ router.post('/login', async (req, res) => {
     if (!user) return res.status(401).json({ error: 'Usuario no encontrado' });
     if (user.password !== password) return res.status(401).json({ error: 'Contraseña incorrecta' });
 
+    const datosUsuario = { id: user.id, usuario: user.usuario, nombre: user.nombre, rol: user.rol };
+
     return res.json({
       mensaje: 'Login exitoso',
-      usuario: { id: user.id, usuario: user.usuario, nombre: user.nombre, rol: user.rol }
+      usuario: datosUsuario,
+      token: crearToken(datosUsuario)
     });
   } catch (err) {
     console.error('LOGIN ERROR:', err);
@@ -62,118 +74,9 @@ router.post('/login', async (req, res) => {
   }
 });
 
-router.get('/setup-admin', async (req, res) => {
-  try {
-    await ensureUsuariosTable();
-
-    const exists = await pool.query(`SELECT id FROM usuarios WHERE usuario = 'admin' LIMIT 1`);
-    if (exists.rows.length > 0) {
-      return res.json({ mensaje: 'Usuario admin ya existe', usuario: 'admin' });
-    }
-
-    await pool.query(
-      `INSERT INTO usuarios (usuario, password, nombre, rol, activo)
-       VALUES ($1, $2, $3, $4, true)`,
-      ['admin', 'admin123', 'Administrador', 'admin']
-    );
-
-    return res.json({ mensaje: 'Usuario admin creado exitosamente', usuario: 'admin', password: 'admin123' });
-  } catch (err) {
-    console.error('SETUP-ADMIN ERROR:', err);
-    return res.status(500).json({ error: 'Error creando admin', detalle: serializeDbError(err) });
-  }
-});
-
-// EMERGENCIA: Resetear contraseña del admin
-// Visitar: /api/auth/reset-admin?clave=LMTLSS2025secreto
-router.get('/reset-admin', async (req, res) => {
-  try {
-    // Verificar clave secreta
-    const { clave } = req.query;
-    if (clave !== 'LMTLSS2025secreto') {
-      return res.status(403).json({ error: 'Acceso denegado' });
-    }
-
-    await ensureUsuariosTable();
-
-    const result = await pool.query(
-      `UPDATE usuarios SET password = 'admin123', activo = true WHERE usuario = 'admin' RETURNING id`
-    );
-
-    if (result.rows.length > 0) {
-      return res.json({ 
-        mensaje: '✅ Contraseña de admin reseteada y activado', 
-        usuario: 'admin', 
-        password: 'admin123',
-        aviso: '⚠️ CAMBIA LA CONTRASEÑA DESPUÉS DE ENTRAR'
-      });
-    } else {
-      // Si no existe admin, crearlo
-      await pool.query(
-        `INSERT INTO usuarios (usuario, password, nombre, rol, activo)
-         VALUES ($1, $2, $3, $4, true)`,
-        ['admin', 'admin123', 'Administrador', 'admin']
-      );
-      return res.json({ 
-        mensaje: '✅ Usuario admin creado', 
-        usuario: 'admin', 
-        password: 'admin123',
-        aviso: '⚠️ CAMBIA LA CONTRASEÑA DESPUÉS DE ENTRAR'
-      });
-    }
-  } catch (err) {
-    console.error('RESET-ADMIN ERROR:', err);
-    return res.status(500).json({ error: 'Error reseteando admin', detalle: serializeDbError(err) });
-  }
-});
-
-// EMERGENCIA: Crear usuario de prueba
-// Visitar: /api/auth/crear-test?clave=LMTLSS2025secreto
-router.get('/crear-test', async (req, res) => {
-  try {
-    const { clave } = req.query;
-    if (clave !== 'LMTLSS2025secreto') {
-      return res.status(403).json({ error: 'Acceso denegado' });
-    }
-
-    await ensureUsuariosTable();
-
-    // Borrar si ya existe
-    await pool.query(`DELETE FROM usuarios WHERE usuario = 'test_temporal'`);
-
-    await pool.query(
-      `INSERT INTO usuarios (usuario, password, nombre, rol, activo)
-       VALUES ($1, $2, $3, $4, true)`,
-      ['test_temporal', 'test123', 'Usuario de Prueba', 'admin']
-    );
-
-    return res.json({ 
-      mensaje: '✅ Usuario de prueba creado', 
-      usuario: 'test_temporal', 
-      password: 'test123',
-      aviso: '⚠️ BORRA ESTE USUARIO CUANDO TERMINES'
-    });
-  } catch (err) {
-    console.error('CREAR-TEST ERROR:', err);
-    return res.status(500).json({ error: 'Error creando usuario test', detalle: serializeDbError(err) });
-  }
-});
-
-// EMERGENCIA: Borrar usuario de prueba
-// Visitar: /api/auth/borrar-test?clave=LMTLSS2025secreto
-router.get('/borrar-test', async (req, res) => {
-  try {
-    const { clave } = req.query;
-    if (clave !== 'LMTLSS2025secreto') {
-      return res.status(403).json({ error: 'Acceso denegado' });
-    }
-
-    await pool.query(`DELETE FROM usuarios WHERE usuario = 'test_temporal'`);
-    return res.json({ mensaje: '✅ Usuario test_temporal eliminado' });
-  } catch (err) {
-    console.error('BORRAR-TEST ERROR:', err);
-    return res.status(500).json({ error: 'Error borrando usuario test', detalle: serializeDbError(err) });
-  }
-});
+// Se eliminaron los endpoints de emergencia (setup-admin, reset-admin, crear-test,
+// borrar-test) y la clave que estaba escrita en el código.
+// Para resetear una contraseña, hazlo directamente en la base (consola SQL de Neon):
+//   UPDATE usuarios SET password = 'nueva-clave', activo = true WHERE usuario = 'admin';
 
 module.exports = router;
