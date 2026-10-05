@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { cerrarSesion, haySesion, descargarExcel } from '../api';
 import './Admin.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
 
@@ -61,7 +62,7 @@ function Dashboard() {
 
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuario');
-    if (!usuarioGuardado) {
+    if (!usuarioGuardado || !haySesion()) {
       navigate('/admin/login');
       return;
     }
@@ -71,17 +72,27 @@ function Dashboard() {
   }, [navigate, cargarDatos]);
 
   const handleLogout = () => {
-    localStorage.removeItem('usuario');
+    cerrarSesion();
     navigate('/admin/login');
+  };
+
+  // Las exportaciones exigen sesión, así que se descargan con el token (no con window.open)
+  const descargar = async (ruta, params, nombreArchivo) => {
+    try {
+      await descargarExcel(ruta, params, nombreArchivo);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      alert('No se pudo descargar el archivo. Intenta de nuevo.');
+    }
   };
 
   const exportarAsistenciasHoy = () => {
     const hoy = ymdCancun();
-    window.open(`${API_URL}/exportar/asistencias?fecha=${hoy}`, '_blank');
+    descargar('/exportar/asistencias', { fecha: hoy }, `asistencias_${hoy}.xlsx`);
   };
 
   const exportarMiembros = () => {
-    window.open(`${API_URL}/exportar/miembros`, '_blank');
+    descargar('/exportar/miembros', undefined, `miembros_${ymdCancun()}.xlsx`);
   };
 
   const exportarAsistenciasRango = () => {
@@ -89,7 +100,7 @@ function Dashboard() {
       alert('Selecciona fecha de inicio y fin');
       return;
     }
-    window.open(`${API_URL}/exportar/asistencias?fechaInicio=${fechaInicio}&fechaFin=${fechaFin}`, '_blank');
+    descargar('/exportar/asistencias', { fechaInicio, fechaFin }, `asistencias_${fechaInicio}_${fechaFin}.xlsx`);
     setMostrarExportarRango(false);
   };
 

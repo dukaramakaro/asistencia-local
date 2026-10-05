@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { guardarSesion } from '../api';
 import './Admin.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
 
@@ -22,8 +23,13 @@ function Login() {
         password
       });
 
-      // Guardar usuario en localStorage
-      localStorage.setItem('usuario', JSON.stringify(res.data.usuario));
+      if (!res.data.token) {
+        setError('El servidor no devolvió una sesión válida. Intenta de nuevo en un minuto.');
+        return;
+      }
+
+      // Guardar token y usuario en localStorage
+      guardarSesion(res.data);
       
       // Redirigir al dashboard
       navigate('/admin/dashboard');

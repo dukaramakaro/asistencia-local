@@ -5,6 +5,9 @@ import axios from 'axios';
 import './Admin.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
 import EditarMiembro from '../components/EditarMiembro';
+import FotoMiembro from '../components/FotoMiembro';
+import { cerrarSesion, haySesion, descargarExcel } from '../api';
+import { reducirImagen, leerArchivoReducido } from '../utils/imagen';
 
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
 
@@ -42,7 +45,7 @@ function Miembros() {
 
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuario');
-    if (!usuarioGuardado) {
+    if (!usuarioGuardado || !haySesion()) {
       navigate('/admin/login');
       return;
     }
@@ -63,12 +66,12 @@ function Miembros() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('usuario');
+    cerrarSesion();
     navigate('/admin/login');
   };
 
-  const capturarFoto = () => {
-    const imagenSrc = webcamRef.current.getScreenshot();
+  const capturarFoto = async () => {
+    const imagenSrc = await reducirImagen(webcamRef.current.getScreenshot());
     setFoto(imagenSrc);
     setCapturandoFoto(false);
   };
@@ -209,8 +212,13 @@ function Miembros() {
     }
   };
 
-  const exportarMiembros = () => {
-    window.open(`${API_URL}/exportar/miembros`, '_blank');
+  const exportarMiembros = async () => {
+    try {
+      await descargarExcel('/exportar/miembros', undefined, `miembros_${new Date().toISOString().split('T')[0]}.xlsx`);
+    } catch (error) {
+      console.error('Error al exportar:', error);
+      alert('No se pudo descargar el archivo. Intenta de nuevo.');
+    }
   };
 
   if (loading) {
@@ -359,11 +367,7 @@ function Miembros() {
                         onChange={(e) => {
                           const file = e.target.files[0];
                           if (file) {
-                            const reader = new FileReader();
-                            reader.onloadend = () => {
-                              setFoto(reader.result);
-                            };
-                            reader.readAsDataURL(file);
+                            leerArchivoReducido(file).then(setFoto);
                           }
                         }}
                       />
@@ -469,10 +473,10 @@ function Miembros() {
                   key={miembro.id} 
                   className={`miembro-card ${miembro.activo === false ? 'inactivo' : ''}`}
                 >
-                  {miembro.fotoBase64 && (
-                    <img 
-                      src={miembro.fotoBase64} 
-                      alt={miembro.nombre}
+                  {miembro.tieneFoto && (
+                    <FotoMiembro
+                      id={miembro.id}
+                      nombre={miembro.nombre}
                       className="miembro-foto"
                     />
                   )}

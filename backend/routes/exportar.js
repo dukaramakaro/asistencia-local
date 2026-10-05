@@ -49,7 +49,7 @@ router.get('/asistencias', async (req, res) => {
   try {
     const { fecha, fechaInicio, fechaFin } = req.query;
 
-    const filtros = {};
+    const filtros = { fotos: true };
     if (fecha) {
       filtros.fecha = fecha;
     } else if (fechaInicio || fechaFin) {

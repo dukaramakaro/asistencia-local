@@ -1,6 +1,7 @@
 import React, { useState, useRef } from 'react';
 import Webcam from 'react-webcam';
 import axios from 'axios';
+import { reducirImagen } from '../utils/imagen';
 import './Kiosco.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
 
@@ -41,48 +42,51 @@ function Kiosco() {
       return;
     }
 
-    try {
-      const res = await axios.get(`${API_URL}/miembros`);
-      const miembros = res.data;
-      
-      const numeroLimpio = numeroMiembro.replace(/[^0-9]/g, '');
-      const miembro = miembros.find(m => 
-        m.numero === numeroLimpio || 
-        m.numero === numeroMiembro ||
-        m.numeroFormateado === numeroMiembro
-      );
+    // Solo dígitos: acepta "1", "0001" o "V-0001"
+    const numeroLimpio = numeroMiembro.replace(/[^0-9]/g, '');
+    if (!numeroLimpio) {
+      alert('Número de miembro no encontrado');
+      setNumeroMiembro('');
+      return;
+    }
 
-      if (miembro) {
-        // Verificar si ya registró asistencia hoy
-        const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${miembro.id}`);
-        setMiembroSeleccionado(miembro);
-        setYaRegistrado(verificacion.data.yaRegistrado);
-        setModo('confirmacion');
-      } else {
+    try {
+      // El servidor devuelve SOLO a esta persona (con su foto) y si ya registró hoy.
+      // Antes se descargaba la lista completa de miembros con todas sus fotos.
+      const res = await axios.get(`${API_URL}/kiosco/numero/${numeroLimpio}`);
+      setMiembroSeleccionado(res.data);
+      setYaRegistrado(res.data.yaRegistrado);
+      setModo('confirmacion');
+    } catch (error) {
+      if (error.response?.status === 404) {
         alert('Número de miembro no encontrado');
         setNumeroMiembro('');
+        return;
       }
-    } catch (error) {
       console.error('Error buscando miembro:', error);
-      alert('Error al buscar miembro');
+      alert(error.response?.status === 429 ? 'Demasiados intentos. Espera un momento.' : 'Error al buscar miembro');
     }
   };
 
   const buscarPorNombre = async (e) => {
     e.preventDefault();
     
-    if (!nombreBusqueda.trim()) {
+    const texto = nombreBusqueda.trim();
+
+    if (!texto) {
       alert('Por favor escribe un nombre');
       return;
     }
 
+    if (texto.length < 3) {
+      alert('Escribe al menos 3 letras de tu nombre');
+      return;
+    }
+
     try {
-      const res = await axios.get(`${API_URL}/miembros`);
-      const miembros = res.data;
-      
-      const resultados = miembros.filter(m => 
-        m.nombre.toLowerCase().includes(nombreBusqueda.toLowerCase())
-      );
+      // Lista corta (máx. 10) sin fotos; la foto se pide al elegir a la persona
+      const res = await axios.get(`${API_URL}/kiosco/nombre`, { params: { q: texto } });
+      const resultados = res.data;
 
       if (resultados.length === 0) {
         alert('No se encontraron miembros con ese nombre');
@@ -90,38 +94,33 @@ function Kiosco() {
       }
 
       if (resultados.length === 1) {
-        // Verificar si ya registró asistencia hoy
-        const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${resultados[0].id}`);
-        setMiembroSeleccionado(resultados[0]);
-        setYaRegistrado(verificacion.data.yaRegistrado);
-        setModo('confirmacion');
+        await seleccionarMiembro(resultados[0]);
       } else {
         setResultadosBusqueda(resultados);
       }
     } catch (error) {
       console.error('Error buscando por nombre:', error);
-      alert('Error al buscar por nombre');
+      alert(error.response?.status === 429 ? 'Demasiados intentos. Espera un momento.' : 'Error al buscar por nombre');
     }
   };
 
   const seleccionarMiembro = async (miembro) => {
     try {
-      // Verificar si ya registró asistencia hoy
-      const verificacion = await axios.get(`${API_URL}/asistencias/verificar/${miembro.id}`);
-      setMiembroSeleccionado(miembro);
-      setYaRegistrado(verificacion.data.yaRegistrado);
+      // Trae a esa persona con su foto y si ya registró asistencia hoy
+      const res = await axios.get(`${API_URL}/kiosco/miembro/${miembro.id}`);
+      setMiembroSeleccionado(res.data);
+      setYaRegistrado(res.data.yaRegistrado);
       setResultadosBusqueda([]);
       setModo('confirmacion');
     } catch (error) {
-      console.error('Error al verificar asistencia:', error);
-      setMiembroSeleccionado(miembro);
-      setResultadosBusqueda([]);
-      setModo('confirmacion');
+      console.error('Error al cargar miembro:', error);
+      alert('Error al buscar miembro');
     }
   };
 
-  const capturarFoto = () => {
-    const imagenSrc = webcamRef.current.getScreenshot();
+  const capturarFoto = async () => {
+    // La foto se reduce en el navegador antes de guardarla (de ~MB a decenas de KB)
+    const imagenSrc = await reducirImagen(webcamRef.current.getScreenshot());
     setFotoVisitante(imagenSrc);
     setCapturandoFoto(false);
   };

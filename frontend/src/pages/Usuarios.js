@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
+import { cerrarSesion, haySesion } from '../api';
 import './Admin.css';
 import logoLMTLSS from '../assets/logo-lmtlss.png';
 
@@ -26,7 +27,7 @@ function Usuarios() {
 
   useEffect(() => {
     const usuarioGuardado = localStorage.getItem('usuario');
-    if (!usuarioGuardado) {
+    if (!usuarioGuardado || !haySesion()) {
       navigate('/admin/login');
       return;
     }
@@ -47,7 +48,7 @@ function Usuarios() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('usuario');
+    cerrarSesion();
     navigate('/admin/login');
   };
 
